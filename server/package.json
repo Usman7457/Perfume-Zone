@@ -1,17 +1,17 @@
 {
-  "name": "server",
+  "name": "perfumezone-server",
+  "version": "1.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "node --watch index.js",
-    "start": "node index.js",
-    "server": "npm --prefix .. run server"
+    "start": "node index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "csv-parse": "^5.5.6",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "perfumezone": "file:..",
     "pg": "^8.23.1",
     "xlsx": "^0.18.5"
   }
