@@ -1,0 +1,12 @@
+{
+  "name": "perfumezone",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "server": "npm run dev",
+    "install:all": "npm i && npm --prefix server i && npm --prefix client i"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
