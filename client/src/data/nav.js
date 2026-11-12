@@ -124,8 +124,7 @@ export const NAV = [
       label: 'Explore UK Boutique Showroom',
       to: '/tools/locations'
     }
-  },
-  { label: 'IMPORT PRODUCTS', to: '/import' }
+  }
 ];
 
 export const FOOTER = {
@@ -136,8 +135,7 @@ export const FOOTER = {
     ['Wholesale & B2B', '/pages/wholesale'],
     ['Contact Us', '/pages/contact-us'],
     ['FAQ', '/pages/faqs'],
-    ['Fragrance Insights', '/blogs/fragrance-insights'],
-    ['Import Products (Excel)', '/import']
+    ['Fragrance Insights', '/blogs/fragrance-insights']
   ],
   legal: [
     ['Terms & Conditions', '/policies/terms-of-service'],

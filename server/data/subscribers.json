@@ -1,0 +1,15 @@
+[
+  {
+    "email": "demo@perfumezone.uk",
+    "source": "checkout",
+    "status": "subscribed",
+    "subscribed_at": "2026-11-10T10:30:00.000Z"
+  },
+  {
+    "email": "newsletter@perfumezone.uk",
+    "source": "footer",
+    "status": "subscribed",
+    "subscribed_at": "2026-11-10T10:30:00.000Z"
+  }
+]
+

@@ -1,31 +1,32 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import AnnouncementBar from './components/AnnouncementBar.jsx';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import CartDrawer from './components/CartDrawer.jsx';
 import CookieBanner from './components/CookieBanner.jsx';
 
-// Pages
+// Keep Home eager for fastest LCP/FCP; code-split secondary routes
 import Home from './pages/Home.jsx';
-import Collection from './pages/Collection.jsx';
-import Product from './pages/Product.jsx';
-import Cart from './pages/Cart.jsx';
-import Checkout from './pages/Checkout.jsx';
-import OrderConfirmation from './pages/OrderConfirmation.jsx';
-import Wishlist from './pages/Wishlist.jsx';
-import ImportProducts from './pages/ImportProducts.jsx';
-import Search from './pages/Search.jsx';
-import Account from './pages/Account.jsx';
-import AdminDashboard from './pages/AdminDashboard.jsx';
-import Contact from './pages/Contact.jsx';
-import About from './pages/About.jsx';
-import Faq from './pages/Faq.jsx';
-import Wholesale from './pages/Wholesale.jsx';
-import Offers from './pages/Offers.jsx';
-import StaticPage from './pages/StaticPage.jsx';
-import Blog from './pages/Blog.jsx';
-import Stores from './pages/Stores.jsx';
+
+const Collection = lazy(() => import('./pages/Collection.jsx'));
+const Product = lazy(() => import('./pages/Product.jsx'));
+const Cart = lazy(() => import('./pages/Cart.jsx'));
+const Checkout = lazy(() => import('./pages/Checkout.jsx'));
+const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation.jsx'));
+const Wishlist = lazy(() => import('./pages/Wishlist.jsx'));
+const ImportProducts = lazy(() => import('./pages/ImportProducts.jsx'));
+const Search = lazy(() => import('./pages/Search.jsx'));
+const Account = lazy(() => import('./pages/Account.jsx'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
+const Contact = lazy(() => import('./pages/Contact.jsx'));
+const About = lazy(() => import('./pages/About.jsx'));
+const Faq = lazy(() => import('./pages/Faq.jsx'));
+const Wholesale = lazy(() => import('./pages/Wholesale.jsx'));
+const Offers = lazy(() => import('./pages/Offers.jsx'));
+const StaticPage = lazy(() => import('./pages/StaticPage.jsx'));
+const Blog = lazy(() => import('./pages/Blog.jsx'));
+const Stores = lazy(() => import('./pages/Stores.jsx'));
 
 export default function App() {
   const { pathname } = useLocation();
@@ -40,42 +41,44 @@ export default function App() {
       <AnnouncementBar />
       <Header />
       <main id="main">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/collections/:handle" element={<Collection key={pathname} />} />
-          <Route path="/collections" element={<Collection key={pathname} />} />
-          <Route path="/products/:handle" element={<Product key={pathname} />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/order-confirmation/:id" element={<OrderConfirmation key={pathname} />} />
-          <Route path="/order-confirmation" element={<OrderConfirmation key={pathname} />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/import" element={<ImportProducts />} />
-          <Route path="/admin/import" element={<ImportProducts />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/:tab" element={<AdminDashboard />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/account/:tab" element={<Account />} />
-          <Route path="/track-order" element={<Account forcedTab="track-order" />} />
-          
-          {/* Dedicated Informational Pages */}
-          <Route path="/pages/contact-us" element={<Contact />} />
-          <Route path="/pages/about-us" element={<About />} />
-          <Route path="/pages/faqs" element={<Faq />} />
-          <Route path="/pages/wholesale" element={<Wholesale />} />
-          <Route path="/pages/dxb-wholesale" element={<Wholesale />} />
-          <Route path="/pages/perfume-offers" element={<Offers />} />
+        <Suspense fallback={<div className="container center page-loader">Loading…</div>}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/collections/:handle" element={<Collection key={pathname} />} />
+            <Route path="/collections" element={<Collection key={pathname} />} />
+            <Route path="/products/:handle" element={<Product key={pathname} />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/order-confirmation/:id" element={<OrderConfirmation key={pathname} />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation key={pathname} />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/import" element={<ImportProducts />} />
+            <Route path="/admin/import" element={<ImportProducts />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/:tab" element={<AdminDashboard />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/account/:tab" element={<Account />} />
+            <Route path="/track-order" element={<Account forcedTab="track-order" />} />
 
-          {/* Dynamic Page & Policy Catchers */}
-          <Route path="/pages/:slug" element={<StaticPage key={pathname} kind="pages" />} />
-          <Route path="/policies/:slug" element={<StaticPage key={pathname} kind="policies" />} />
-          <Route path="/blogs/fragrance-insights" element={<Blog />} />
-          <Route path="/tools/locations" element={<Stores />} />
+            {/* Dedicated Informational Pages */}
+            <Route path="/pages/contact-us" element={<Contact />} />
+            <Route path="/pages/about-us" element={<About />} />
+            <Route path="/pages/faqs" element={<Faq />} />
+            <Route path="/pages/wholesale" element={<Wholesale />} />
+            <Route path="/pages/dxb-wholesale" element={<Wholesale />} />
+            <Route path="/pages/perfume-offers" element={<Offers />} />
 
-          {/* 404 Page */}
-          <Route path="*" element={<StaticPage key={pathname} kind="404" />} />
-        </Routes>
+            {/* Dynamic Page & Policy Catchers */}
+            <Route path="/pages/:slug" element={<StaticPage key={pathname} kind="pages" />} />
+            <Route path="/policies/:slug" element={<StaticPage key={pathname} kind="policies" />} />
+            <Route path="/blogs/fragrance-insights" element={<Blog />} />
+            <Route path="/tools/locations" element={<Stores />} />
+
+            {/* 404 Page */}
+            <Route path="*" element={<StaticPage key={pathname} kind="404" />} />
+          </Routes>
+        </Suspense>
       </main>
       <Footer />
       <CartDrawer />

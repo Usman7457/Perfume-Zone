@@ -59,14 +59,20 @@ function Hero() {
   return (
     <section className="hero" aria-roledescription="carousel">
       <Link to={s.to} className="hero-slide">
-        <div
+        <img
+          src={s.bg}
+          alt={s.title}
           className="hero-image-layer"
-          style={{ backgroundImage: `url(${s.bg})` }}
+          width="1600"
+          height="900"
+          loading="eager"
+          decoding="async"
+          fetchPriority={i === 0 ? 'high' : 'auto'}
         />
         <div className="hero-overlay-tint" />
         <div className="hero-copy">
           <span className="hero-eyebrow">PERFUME ZONE UK</span>
-          <h2>{s.title}</h2>
+          <h1>{s.title}</h1>
           <p className="hero-subtitle">{s.subtitle}</p>
           <span className="btn light hero-cta-btn">{s.cta}</span>
         </div>
@@ -206,8 +212,8 @@ export default function Home() {
             <Link to="/pages/perfume-offers" className="btn light">
               Discover Exclusive Offers
             </Link>
-            <Link to="/import" className="btn ghost light-ghost">
-              Upload Inventory (Excel)
+            <Link to="/collections/all" className="btn ghost light-ghost">
+              Explore All Perfumes
             </Link>
           </div>
         </div>

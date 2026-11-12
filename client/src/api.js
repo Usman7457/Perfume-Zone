@@ -1,5 +1,6 @@
 import { INITIAL_PRODUCTS } from './data/products.js';
 import { INITIAL_BLOGS } from './data/blogs.js';
+import { INITIAL_ORDERS } from './data/orders.js';
 
 // Track backend API availability to avoid repeated slow hangs
 let apiOnline = null; // null = untried, true = online, false = offline
@@ -233,7 +234,7 @@ export const saveImportedProducts = (newProducts, replaceAll = false) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ products: newProducts }),
       signal: AbortSignal.timeout ? AbortSignal.timeout(2000) : undefined
-    }).catch(() => {});
+    }).catch(() => { });
 
     return merged;
   } catch (err) {
@@ -429,71 +430,19 @@ export const getCollection = async (handle = 'all') => {
   return local;
 };
 
-const SEED_ORDERS = [
-  {
-    id: 'PZ-100001',
-    email: 'demo@perfumezone.uk',
-    customerName: 'Demo Customer',
-    shippingAddress: {
-      firstName: 'Demo',
-      lastName: 'Customer',
-      address: '10 Oxford Street',
-      apartment: 'Flat 2B',
-      city: 'London',
-      postcode: 'W1D 1BS',
-      country: 'United Kingdom',
-      phone: '+44 7700 900123'
-    },
-    items: [
-      {
-        id: 1,
-        handle: 'oud-elixir-dubai-oud-intense',
-        title: 'Oud Elixir Dubai Oud Intense',
-        brand: 'Oud Elixir',
-        size: '100ml Extrait De Parfum',
-        price: 65.0,
-        qty: 1,
-        image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80'
-      },
-      {
-        id: 4,
-        handle: 'lattafa-khamrah',
-        title: 'Lattafa Khamrah Luxury Edition',
-        brand: 'Lattafa',
-        size: '100ml Eau De Parfum',
-        price: 42.0,
-        qty: 1,
-        image: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&w=800&q=80'
-      }
-    ],
-    shippingMethod: 'free',
-    shippingCost: 0,
-    subtotal: 107.0,
-    discount: 10.7,
-    couponCode: 'PERFUME10',
-    total: 96.3,
-    paymentMethod: 'card',
-    status: 'Dispatched',
-    trackingNumber: 'RM984512004GB',
-    courier: 'Royal Mail Tracked 48',
-    adminNote: 'Insulated luxury gift box dispatched from London hub.',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
-  }
-];
-
 function ensureLocalOrdersInitialized() {
   try {
     const initialized = localStorage.getItem(ORDERS_INIT_KEY);
     const existing = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
     if (!initialized) {
-      const merged = existing.length ? existing : SEED_ORDERS;
+      const merged = existing.length ? existing : INITIAL_ORDERS;
       localStorage.setItem(ORDERS_KEY, JSON.stringify(merged));
       localStorage.setItem(ORDERS_INIT_KEY, '1');
       return merged;
     }
     return Array.isArray(existing) ? existing : [];
   } catch {
-    return [...SEED_ORDERS];
+    return [...INITIAL_ORDERS];
   }
 }
 
@@ -505,9 +454,9 @@ function readSubscribersLocal() {
       const seeded = existing.length
         ? existing
         : [
-            { email: 'demo@perfumezone.uk', source: 'checkout', status: 'subscribed', subscribed_at: new Date().toISOString() },
-            { email: 'newsletter@perfumezone.uk', source: 'footer', status: 'subscribed', subscribed_at: new Date().toISOString() }
-          ];
+          { email: 'demo@perfumezone.uk', source: 'checkout', status: 'subscribed', subscribed_at: new Date().toISOString() },
+          { email: 'newsletter@perfumezone.uk', source: 'footer', status: 'subscribed', subscribed_at: new Date().toISOString() }
+        ];
       localStorage.setItem(SUBSCRIBERS_KEY, JSON.stringify(seeded));
       localStorage.setItem(SUBSCRIBERS_INIT_KEY, '1');
       return seeded;
@@ -530,7 +479,7 @@ export const subscribe = async (email, source = 'footer') => {
       subs.unshift({ email: clean, source, status: 'subscribed', subscribed_at: new Date().toISOString() });
       localStorage.setItem(SUBSCRIBERS_KEY, JSON.stringify(subs));
     }
-  } catch {}
+  } catch { }
 
   try {
     const controller = new AbortController();
@@ -565,7 +514,7 @@ export const getSubscribersAdmin = async () => {
         }
         return combined;
       }
-    } catch {}
+    } catch { }
   }
   return localSubs;
 };
@@ -574,6 +523,7 @@ export const deleteSubscriberAdmin = (email) => {
   const clean = String(email || '').trim().toLowerCase();
   const next = readSubscribersLocal().filter((s) => (s.email || '').toLowerCase() !== clean);
   localStorage.setItem(SUBSCRIBERS_KEY, JSON.stringify(next));
+  fetch('/api/newsletter/' + encodeURIComponent(clean), { method: 'DELETE' }).catch(() => { });
   return next;
 };
 
@@ -589,7 +539,7 @@ export const createOrder = async (orderData) => {
   };
 
   if (orderData?.newsletter && orderData?.email) {
-    subscribe(orderData.email, 'checkout').catch(() => {});
+    subscribe(orderData.email, 'checkout').catch(() => { });
   }
 
   try {
@@ -608,12 +558,14 @@ export const createOrder = async (orderData) => {
       apiOnline = true;
       lastHealthCheck = Date.now();
     }
-  } catch {}
+  } catch { }
 
   try {
     const orders = ensureLocalOrdersInitialized();
-    orders.unshift(finalOrder);
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+    const deduped = orders.filter((o) => o.id !== finalOrder.id);
+    deduped.unshift(finalOrder);
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(deduped));
+    window.dispatchEvent(new Event('pz:orders-change'));
   } catch (e) {
     console.error(e);
   }
@@ -639,7 +591,7 @@ export const getOrderById = async (id) => {
         lastHealthCheck = Date.now();
         if (data && data.id) return data;
       }
-    } catch {}
+    } catch { }
   }
 
   return null;
@@ -663,7 +615,7 @@ export const getUserOrders = async (email) => {
         lastHealthCheck = Date.now();
         if (data && Array.isArray(data.orders)) apiOrders = data.orders;
       }
-    } catch {}
+    } catch { }
   }
 
   const seenIds = new Set(localOrders.map((o) => o.id));
@@ -672,18 +624,48 @@ export const getUserOrders = async (email) => {
 
 export const getAllOrdersAdmin = () => ensureLocalOrdersInitialized();
 
+export const fetchAllOrdersAdmin = async () => {
+  const localOrders = ensureLocalOrdersInitialized();
+  if (shouldTryApi()) {
+    try {
+      const data = await get('/api/orders', 1500);
+      if (data && Array.isArray(data.orders)) {
+        const map = new Map();
+        for (const o of localOrders) map.set(o.id, o);
+        for (const o of data.orders) {
+          if (!map.has(o.id)) map.set(o.id, o);
+        }
+        const merged = Array.from(map.values()).sort(
+          (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+        );
+        localStorage.setItem(ORDERS_KEY, JSON.stringify(merged));
+        return merged;
+      }
+    } catch { }
+  }
+  return localOrders;
+};
+
 export const updateOrderAdmin = (orderId, patch) => {
   const orders = ensureLocalOrdersInitialized();
   const idx = orders.findIndex((o) => o.id === orderId);
   if (idx === -1) return null;
   orders[idx] = { ...orders[idx], ...patch, updatedAt: new Date().toISOString() };
   localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+  window.dispatchEvent(new Event('pz:orders-change'));
+  fetch('/api/orders/' + encodeURIComponent(orderId), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch)
+  }).catch(() => { });
   return orders[idx];
 };
 
 export const deleteOrderAdmin = (orderId) => {
   const next = ensureLocalOrdersInitialized().filter((o) => o.id !== orderId);
   localStorage.setItem(ORDERS_KEY, JSON.stringify(next));
+  window.dispatchEvent(new Event('pz:orders-change'));
+  fetch('/api/orders/' + encodeURIComponent(orderId), { method: 'DELETE' }).catch(() => { });
   return next;
 };
 
@@ -717,7 +699,7 @@ export const saveBlogAdmin = (post) => {
     category: String(post.category || 'Fragrance Insights').trim(),
     date: String(
       post.date ||
-        new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+      new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
     ).trim(),
     readTime: String(post.readTime || '4 min read').trim(),
     img:
@@ -776,7 +758,7 @@ export const getSiteSettings = () => {
             : DEFAULT_SITE_SETTINGS.announcements
       };
     }
-  } catch {}
+  } catch { }
   return DEFAULT_SITE_SETTINGS;
 };
 

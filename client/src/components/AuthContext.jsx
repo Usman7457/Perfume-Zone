@@ -1,5 +1,13 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { SEEDED_USERS } from '../data/users.js';
+
+function syncUserToServer(userObj) {
+  fetch('/api/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userObj)
+  }).catch(() => {});
+}
 
 const AuthContext = createContext(null);
 
@@ -36,6 +44,29 @@ function persistUsersStore(list) {
 
 export function AuthProvider({ children }) {
   const [usersStore, setUsersStore] = useState(loadUsersStore);
+
+  useEffect(() => {
+    let ignore = false;
+    fetch('/api/users')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (ignore || !data || !Array.isArray(data.users) || !data.users.length) return;
+        const current = loadUsersStore();
+        const seen = new Set(current.map((u) => (u.email || '').toLowerCase()));
+        const merged = [...current];
+        for (const u of data.users) {
+          if (u?.email && !seen.has(u.email.toLowerCase())) {
+            merged.push(u);
+          }
+        }
+        setUsersStore(merged);
+        persistUsersStore(merged);
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, []);
   const [user, setUser] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(SESSION_KEY));
@@ -118,6 +149,7 @@ export function AuthProvider({ children }) {
     const next = [...latestUsers, newUser];
     setUsersStore(next);
     persistUsersStore(next);
+    syncUserToServer(newUser);
 
     const safe = sanitizeUser(newUser);
     persistSession(safe);
@@ -142,6 +174,7 @@ export function AuthProvider({ children }) {
       latestUsers[idx] = merged;
       setUsersStore(latestUsers);
       persistUsersStore(latestUsers);
+      syncUserToServer(merged);
       updatedSafe = sanitizeUser(merged);
     }
 
@@ -187,10 +220,12 @@ export function AuthProvider({ children }) {
 
     setUsersStore(latestUsers);
     persistUsersStore(latestUsers);
+    const savedRecord = latestUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+    if (savedRecord) syncUserToServer(savedRecord);
 
     // Sync active session if editing current signed-in user
     if (user && user.email.toLowerCase() === cleanEmail) {
-      persistSession(sanitizeUser(latestUsers.find((u) => u.email.toLowerCase() === cleanEmail)));
+      persistSession(sanitizeUser(savedRecord));
     }
     return { ok: true };
   };
@@ -203,6 +238,7 @@ export function AuthProvider({ children }) {
     const next = loadUsersStore().filter((u) => (u.email || '').toLowerCase() !== cleanEmail);
     setUsersStore(next);
     persistUsersStore(next);
+    fetch('/api/users/' + encodeURIComponent(cleanEmail), { method: 'DELETE' }).catch(() => {});
     return { ok: true };
   };
 

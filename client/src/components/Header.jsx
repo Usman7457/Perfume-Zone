@@ -282,17 +282,6 @@ export default function Header() {
               FIND A STORE
             </Link>
           </li>
-          <li>
-            <Link
-              to="/import"
-              onClick={() => {
-                setDrawer(false);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              IMPORT PRODUCTS (EXCEL)
-            </Link>
-          </li>
         </ul>
         <Link
           to={isAdmin ? '/admin' : '/account'}

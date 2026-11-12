@@ -40,37 +40,43 @@ export default function OrderConfirmation() {
     createdAt
   } = order;
 
+  const s = String(order.status || 'Confirmed').toLowerCase();
+  const stageIdx = s.includes('deliver') && !s.includes('out')
+    ? 3
+    : s.includes('dispatch') || s.includes('ship') || s.includes('out')
+      ? 2
+      : s.includes('quality') || s.includes('pack')
+        ? 1
+        : 0;
+
   return (
     <div className="container narrow order-confirmation-page">
       <div className="confirmation-badge-wrapper">
         <div className="confirmation-icon-circle">
           <CheckIcon />
         </div>
-        <span className="confirmation-eyebrow">Thank You for Your Order!</span>
+        <span className="confirmation-eyebrow">Status: {order.status || 'Confirmed'}</span>
         <h1>Order Confirmed #{orderId}</h1>
         <p className="confirmation-subtext">
-          A confirmation receipt has been sent to <strong>{email}</strong>. We're carefully preparing your luxury fragrances for dispatch.
+          A confirmation receipt has been sent to <strong>{email}</strong>. We&apos;re carefully preparing your luxury fragrances for dispatch.
         </p>
       </div>
 
       {/* Tracker Steps */}
       <div className="order-tracker">
-        <div className="tracker-step completed">
-          <div className="step-dot" />
-          <span>Order Placed</span>
-        </div>
-        <div className="tracker-step active">
-          <div className="step-dot" />
-          <span>Quality Check</span>
-        </div>
-        <div className="tracker-step">
-          <div className="step-dot" />
-          <span>Dispatched</span>
-        </div>
-        <div className="tracker-step">
-          <div className="step-dot" />
-          <span>Delivered</span>
-        </div>
+        {['Order Placed', 'Quality Check', 'Dispatched', 'Delivered'].map((label, idx) => (
+          <div
+            key={label}
+            className={
+              'tracker-step' +
+              (idx < stageIdx ? ' completed' : '') +
+              (idx === stageIdx ? ' active' : '')
+            }
+          >
+            <div className="step-dot" />
+            <span>{label}</span>
+          </div>
+        ))}
       </div>
 
       {/* Summary Box */}
@@ -151,6 +157,9 @@ export default function OrderConfirmation() {
         >
           Print Receipt
         </button>
+        <Link to={`/account/track-order?orderId=${encodeURIComponent(orderId)}`} className="btn ghost">
+          Track This Order
+        </Link>
         <Link to="/collections/all" className="btn">
           Continue Shopping
         </Link>

@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import express from 'express';
@@ -7,6 +8,32 @@ import pg from 'pg';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
+
+const DATA_DIR = path.join(__dirname, 'data');
+const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const SUBSCRIBERS_FILE = path.join(DATA_DIR, 'subscribers.json');
+
+function readJsonFile(filePath, fallback = []) {
+  try {
+    if (!fs.existsSync(filePath)) return fallback;
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch (err) {
+    console.warn(`Failed reading ${filePath}:`, err.message);
+    return fallback;
+  }
+}
+
+function writeJsonFile(filePath, data) {
+  try {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.warn(`Failed writing ${filePath}:`, err.message);
+  }
+}
 
 const { Pool } = pg;
 
@@ -138,6 +165,9 @@ function formatOrder(row, lineItems = null) {
     shippingMethod: row.shipping_method || row.shippingMethod || 'standard',
     paymentMethod: row.payment_method || row.paymentMethod || 'card',
     orderNote: row.order_note || row.orderNote || null,
+    trackingNumber: row.tracking_number || row.trackingNumber || '',
+    courier: row.courier || 'Royal Mail Tracked',
+    adminNote: row.admin_note || row.adminNote || '',
     status: row.status || 'Confirmed',
     createdAt: row.created_at || row.createdAt || new Date().toISOString(),
     updatedAt: row.updated_at || row.updatedAt || row.created_at || null
@@ -484,8 +514,19 @@ const FALLBACK_PRODUCTS = [
   }
 ];
 
-const inMemoryOrders = [];
-const inMemorySubscribers = [];
+const inMemoryOrders = readJsonFile(ORDERS_FILE, []);
+const inMemoryUsers = readJsonFile(USERS_FILE, []);
+const inMemorySubscribers = readJsonFile(SUBSCRIBERS_FILE, []);
+
+function syncOrdersFile() {
+  writeJsonFile(ORDERS_FILE, inMemoryOrders);
+}
+function syncUsersFile() {
+  writeJsonFile(USERS_FILE, inMemoryUsers);
+}
+function syncSubscribersFile() {
+  writeJsonFile(SUBSCRIBERS_FILE, inMemorySubscribers);
+}
 
 async function checkDbConnection() {
   if (isCheckingDb) return isDbConnected;
@@ -1079,6 +1120,9 @@ app.post(
       shippingMethod = 'standard',
       paymentMethod = 'card',
       orderNote = null,
+      trackingNumber = '',
+      courier = 'Royal Mail Tracked',
+      adminNote = '',
       status = 'Confirmed',
       items = [],
       newsletter = false
@@ -1105,29 +1149,52 @@ app.post(
       image: item.image || item.image_url || ''
     }));
 
-    const fallbackOrder = {
+    const normalizedOrder = {
       id,
-      user_id: null,
+      userId: req.body.userId || null,
       email: cleanEmail,
-      customer_name: resolvedName,
-      phone: shippingAddress.phone || '',
-      address: shippingAddress.address || '',
-      apartment: shippingAddress.apartment || '',
-      city: shippingAddress.city || '',
-      postcode: shippingAddress.postcode || '',
-      country: shippingAddress.country || 'United Kingdom',
-      subtotal: Number(subtotal || 0),
-      shipping_cost: Number(shippingCost || 0),
-      discount: Number(discount || 0),
-      coupon_code: couponCode || null,
-      total: Number(total || 0),
-      shipping_method: shippingMethod || 'standard',
-      payment_method: paymentMethod || 'card',
-      order_note: orderNote || null,
-      status,
+      customerName: resolvedName,
+      shippingAddress: {
+        firstName: shippingAddress.firstName || '',
+        lastName: shippingAddress.lastName || '',
+        address: shippingAddress.address || '',
+        apartment: shippingAddress.apartment || '',
+        city: shippingAddress.city || '',
+        postcode: shippingAddress.postcode || '',
+        country: shippingAddress.country || 'United Kingdom',
+        phone: shippingAddress.phone || ''
+      },
       items: cleanItems,
-      created_at: new Date().toISOString()
+      shippingMethod: shippingMethod || 'standard',
+      shippingCost: Number(shippingCost || 0),
+      subtotal: Number(subtotal || 0),
+      discount: Number(discount || 0),
+      couponCode: couponCode || null,
+      total: Number(total || 0),
+      paymentMethod: paymentMethod || 'card',
+      orderNote: orderNote || null,
+      trackingNumber: trackingNumber || '',
+      courier: courier || 'Royal Mail Tracked',
+      adminNote: adminNote || '',
+      status,
+      createdAt: new Date().toISOString()
     };
+
+    // Always persist order to server/data/orders.json
+    const existingIdx = inMemoryOrders.findIndex((o) => o.id === id);
+    if (existingIdx >= 0) inMemoryOrders[existingIdx] = normalizedOrder;
+    else inMemoryOrders.unshift(normalizedOrder);
+    syncOrdersFile();
+
+    if (newsletter && !inMemorySubscribers.some((s) => s.email === cleanEmail)) {
+      inMemorySubscribers.push({
+        email: cleanEmail,
+        source: 'checkout',
+        status: 'subscribed',
+        subscribed_at: new Date().toISOString()
+      });
+      syncSubscribersFile();
+    }
 
     if (isDbConnected) {
       const client = await pool.connect();
@@ -1250,23 +1317,30 @@ app.post(
       }
     }
 
-    inMemoryOrders.unshift(fallbackOrder);
-    if (newsletter && !inMemorySubscribers.some((s) => s.email === cleanEmail)) {
-      inMemorySubscribers.push({
-        email: cleanEmail,
-        source: 'checkout',
-        status: 'subscribed',
-        subscribed_at: new Date().toISOString()
-      });
-    }
-
     res.status(201).json({
       ok: true,
       id,
       userId: 1,
-      storage: 'in-memory',
-      order: formatOrder(fallbackOrder)
+      storage: 'file-json',
+      order: formatOrder(normalizedOrder)
     });
+  })
+);
+
+// GET /api/orders (All orders for Admin Dashboard)
+app.get(
+  '/api/orders',
+  wrap(async (req, res) => {
+    if (isDbConnected) {
+      try {
+        const ordersRes = await pool.query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 200');
+        return res.json({ orders: ordersRes.rows.map((r) => formatOrder(r)), storage: 'postgresql' });
+      } catch (err) {
+        console.warn('PostgreSQL orders list failed:', err.message);
+        isDbConnected = false;
+      }
+    }
+    res.json({ orders: inMemoryOrders.map((r) => formatOrder(r)), storage: 'file-json' });
   })
 );
 
@@ -1290,9 +1364,173 @@ app.get(
       }
     }
 
-    const found = inMemoryOrders.find((o) => o.id === req.params.id);
+    const found = inMemoryOrders.find(
+      (o) => String(o.id || '').toUpperCase() === String(req.params.id || '').toUpperCase()
+    );
     if (found) return res.json(formatOrder(found));
     res.status(404).json({ error: 'Order not found' });
+  })
+);
+
+// PATCH /api/orders/:id (Update status, trackingNumber, courier, adminNote)
+app.patch(
+  '/api/orders/:id',
+  wrap(async (req, res) => {
+    const orderId = String(req.params.id || '').trim();
+    const { status, trackingNumber, courier, adminNote } = req.body || {};
+
+    const idx = inMemoryOrders.findIndex(
+      (o) => String(o.id || '').toUpperCase() === orderId.toUpperCase()
+    );
+    if (idx >= 0) {
+      inMemoryOrders[idx] = {
+        ...inMemoryOrders[idx],
+        ...(status !== undefined ? { status } : {}),
+        ...(trackingNumber !== undefined ? { trackingNumber } : {}),
+        ...(courier !== undefined ? { courier } : {}),
+        ...(adminNote !== undefined ? { adminNote } : {}),
+        updatedAt: new Date().toISOString()
+      };
+      syncOrdersFile();
+    }
+
+    if (isDbConnected) {
+      try {
+        await pool.query(
+          `UPDATE orders SET
+             status = COALESCE($2, status)
+           WHERE id = $1`,
+          [orderId, status ?? null]
+        );
+      } catch (err) {
+        console.warn('PostgreSQL order update failed:', err.message);
+      }
+    }
+
+    if (idx >= 0) {
+      return res.json({ ok: true, order: formatOrder(inMemoryOrders[idx]) });
+    }
+    res.status(404).json({ error: 'Order not found' });
+  })
+);
+
+// DELETE /api/orders/:id
+app.delete(
+  '/api/orders/:id',
+  wrap(async (req, res) => {
+    const orderId = String(req.params.id || '').trim();
+    const idx = inMemoryOrders.findIndex(
+      (o) => String(o.id || '').toUpperCase() === orderId.toUpperCase()
+    );
+    if (idx >= 0) {
+      inMemoryOrders.splice(idx, 1);
+      syncOrdersFile();
+    }
+
+    if (isDbConnected) {
+      try {
+        await pool.query('DELETE FROM orders WHERE id = $1', [orderId]);
+      } catch {}
+    }
+
+    res.json({ ok: true });
+  })
+);
+
+// GET /api/users (Read registered & seeded users from server/data/users.json)
+app.get(
+  '/api/users',
+  wrap(async (req, res) => {
+    res.json({ users: inMemoryUsers, storage: 'file-json' });
+  })
+);
+
+// POST /api/users (Register or update user in server/data/users.json & PostgreSQL)
+app.post(
+  '/api/users',
+  wrap(async (req, res) => {
+    const incoming = req.body || {};
+    const cleanEmail = String(incoming.email || '').trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+
+    const existingIdx = inMemoryUsers.findIndex(
+      (u) => String(u.email || '').toLowerCase() === cleanEmail
+    );
+    const mergedUser =
+      existingIdx >= 0
+        ? {
+            ...inMemoryUsers[existingIdx],
+            ...incoming,
+            email: cleanEmail,
+            password: incoming.password || inMemoryUsers[existingIdx].password
+          }
+        : {
+            id: incoming.id || Date.now(),
+            name: String(incoming.name || 'Customer').trim(),
+            email: cleanEmail,
+            password: incoming.password || '',
+            role: incoming.role === 'admin' ? 'admin' : 'customer',
+            phone: incoming.phone || '',
+            address: incoming.address || '',
+            apartment: incoming.apartment || '',
+            city: incoming.city || '',
+            postcode: incoming.postcode || '',
+            country: incoming.country || 'United Kingdom',
+            joinedDate:
+              incoming.joinedDate ||
+              new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+          };
+
+    if (existingIdx >= 0) inMemoryUsers[existingIdx] = mergedUser;
+    else inMemoryUsers.push(mergedUser);
+    syncUsersFile();
+
+    if (isDbConnected) {
+      try {
+        await pool.query(
+          `INSERT INTO users (email, name, phone, address, apartment, city, postcode, country)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT (email) DO UPDATE SET
+             name = COALESCE(NULLIF(EXCLUDED.name, ''), users.name),
+             phone = COALESCE(NULLIF(EXCLUDED.phone, ''), users.phone),
+             address = COALESCE(NULLIF(EXCLUDED.address, ''), users.address),
+             apartment = COALESCE(NULLIF(EXCLUDED.apartment, ''), users.apartment),
+             city = COALESCE(NULLIF(EXCLUDED.city, ''), users.city),
+             postcode = COALESCE(NULLIF(EXCLUDED.postcode, ''), users.postcode),
+             country = COALESCE(NULLIF(EXCLUDED.country, ''), users.country)`,
+          [
+            mergedUser.email,
+            mergedUser.name,
+            mergedUser.phone || null,
+            mergedUser.address || null,
+            mergedUser.apartment || null,
+            mergedUser.city || null,
+            mergedUser.postcode || null,
+            mergedUser.country || 'United Kingdom'
+          ]
+        );
+      } catch (err) {
+        console.warn('PostgreSQL user upsert failed:', err.message);
+      }
+    }
+
+    res.status(201).json({ ok: true, user: mergedUser, storage: 'file-json' });
+  })
+);
+
+// DELETE /api/users/:email
+app.delete(
+  '/api/users/:email',
+  wrap(async (req, res) => {
+    const cleanEmail = decodeURIComponent(req.params.email || '').trim().toLowerCase();
+    const idx = inMemoryUsers.findIndex((u) => (u.email || '').toLowerCase() === cleanEmail);
+    if (idx >= 0) {
+      inMemoryUsers.splice(idx, 1);
+      syncUsersFile();
+    }
+    res.json({ ok: true });
   })
 );
 
@@ -1333,6 +1571,16 @@ app.post(
       return res.status(400).json({ error: 'Please provide a valid email address' });
     }
 
+    if (!inMemorySubscribers.some((s) => s.email === email)) {
+      inMemorySubscribers.push({
+        email,
+        source,
+        status: 'subscribed',
+        subscribed_at: new Date().toISOString()
+      });
+      syncSubscribersFile();
+    }
+
     if (isDbConnected) {
       try {
         const subRes = await pool.query(
@@ -1351,16 +1599,21 @@ app.post(
       }
     }
 
-    if (!inMemorySubscribers.some((s) => s.email === email)) {
-      inMemorySubscribers.push({
-        email,
-        source,
-        status: 'subscribed',
-        subscribed_at: new Date().toISOString()
-      });
-    }
+    res.json({ ok: true, storage: 'file-json' });
+  })
+);
 
-    res.json({ ok: true, storage: 'in-memory' });
+// DELETE /api/newsletter/:email
+app.delete(
+  '/api/newsletter/:email',
+  wrap(async (req, res) => {
+    const cleanEmail = decodeURIComponent(req.params.email || '').trim().toLowerCase();
+    const idx = inMemorySubscribers.findIndex((s) => (s.email || '').toLowerCase() === cleanEmail);
+    if (idx >= 0) {
+      inMemorySubscribers.splice(idx, 1);
+      syncSubscribersFile();
+    }
+    res.json({ ok: true });
   })
 );
 

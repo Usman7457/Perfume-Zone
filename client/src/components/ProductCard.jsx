@@ -19,12 +19,12 @@ export default function ProductCard({ p }) {
       <div className="card-media-wrapper">
         <Link to={'/products/' + p.handle} className="card-img" aria-label={p.title}>
           {p.image_url ? (
-            <img src={p.image_url} alt={p.title} loading="lazy" />
+            <img src={p.image_url} alt={p.title} loading="lazy" decoding="async" width="400" height="500" />
           ) : (
             <div className="ph" />
           )}
           {p.image_url_2 && (
-            <img className="alt" src={p.image_url_2} alt="" loading="lazy" />
+            <img className="alt" src={p.image_url_2} alt="" loading="lazy" decoding="async" width="400" height="500" />
           )}
         </Link>
 
