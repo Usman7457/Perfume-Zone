@@ -4559,6 +4559,7 @@ ul {
 .dash-sidebar {
   position: sticky;
   top: 90px;
+  min-width: 0;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -4567,6 +4568,13 @@ ul {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.dash-nav-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
 }
 
 .dash-user-card {
@@ -5349,43 +5357,53 @@ ul {
 @media (max-width: 960px) {
   .dashboard-shell {
     padding: 4px 0 32px;
+    overflow-x: hidden;
   }
 
   .dashboard-layout {
-    grid-template-columns: 1fr;
-    gap: 18px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
 
   .dash-sidebar {
     position: static;
-    gap: 14px;
-    padding: 16px;
+    gap: 12px;
+    padding: 14px;
+    min-width: 0;
   }
 
-  .dash-nav-group {
-    gap: 4px;
+  .dash-user-card {
+    padding-bottom: 12px;
   }
 
-  .dash-nav-heading {
-    padding: 0 2px;
-  }
-
-  .dash-nav {
+  .dash-nav-groups {
+    display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     overflow-x: auto;
     gap: 8px;
-    padding-bottom: 4px;
+    padding-bottom: 6px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
+  }
+
+  .dash-nav-group,
+  .dash-nav {
+    display: contents;
+  }
+
+  .dash-nav-heading {
+    display: none;
   }
 
   .dash-nav-link {
     flex: 0 0 auto;
     white-space: nowrap;
     min-height: 40px;
+    padding: 8px 13px;
     border: 1px solid var(--line);
     background: var(--tint);
+    font-size: 13px;
   }
 
   .dash-nav-link.active {
@@ -5396,17 +5414,20 @@ ul {
   .dash-sidebar-footer {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
+    padding-top: 12px;
   }
 
   .dash-sidebar-footer .btn {
     margin-top: 0 !important;
-    flex: 1 1 140px;
+    flex: 1 1 130px;
+    min-height: 40px;
+    padding: 8px 12px;
   }
 
   .dash-sidebar-footer .dash-nav-link {
-    flex: 1 1 180px;
+    flex: 1 1 160px;
     justify-content: center;
   }
 
@@ -5420,47 +5441,89 @@ ul {
 }
 
 @media (max-width: 640px) {
+  .account-page-container {
+    padding: 16px 12px;
+  }
 
   .stat-cards-grid.cols-3,
-  .stat-cards-grid.cols-4,
+  .stat-cards-grid.cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px 12px;
+    gap: 6px;
+  }
+
+  .stat-value {
+    font-size: 1.3rem;
+    word-break: break-word;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
   .form-row-2,
-  .form-row-3,
+  .form-row-3 {
+    grid-template-columns: 1fr;
+  }
+
   .track-stepper {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .track-step {
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .track-step-dot {
+    flex-shrink: 0;
   }
 
   .dash-header-bar {
     flex-direction: column;
     align-items: stretch;
-    padding: 18px 16px;
-    gap: 14px;
+    padding: 16px 14px;
+    gap: 12px;
   }
 
   .dash-header-bar h1 {
-    font-size: 1.7rem;
+    font-size: 1.55rem;
   }
 
   .dash-header-actions,
   .dash-card-actions,
   .quick-actions-row {
     width: 100%;
+    gap: 8px;
   }
 
   .dash-header-actions > *,
   .dash-card-actions > *,
   .quick-actions-row > * {
-    flex: 1 1 100%;
+    flex: 1 1 calc(50% - 4px);
+    min-width: 130px;
     text-align: center;
     justify-content: center;
+    padding: 10px 12px;
+    font-size: 12px;
   }
 
   .dash-card-head {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
   }
 
   .dash-card {
-    padding: 18px 14px;
+    padding: 16px 12px;
   }
 
   .track-search-bar {
@@ -5471,15 +5534,105 @@ ul {
     width: 100%;
   }
 
+  .track-result-box {
+    padding: 16px 12px;
+  }
+
   .dash-card .admin-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
   }
 
   .dash-card .admin-toolbar input,
   .dash-card .admin-toolbar select {
     flex: 1 1 100%;
     width: 100%;
+  }
+
+  /* Responsive Card-Rows for Admin Tables on Mobile */
+  .admin-table-wrap {
+    overflow-x: visible;
+    border: 0;
+  }
+
+  .admin-table thead {
+    display: none;
+  }
+
+  .admin-table,
+  .admin-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-table tbody tr {
+    display: block;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+
+  .admin-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .admin-table td,
+  .admin-table .td-right {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px solid #f2efe9;
+    text-align: right;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .admin-table td:last-child {
+    border-bottom: 0;
+    padding-top: 10px;
+    padding-bottom: 2px;
+  }
+
+  .admin-table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .admin-table td.td-right::before {
+    display: none;
+  }
+
+  .table-product-cell {
+    min-width: 0;
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .table-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .table-actions .btn {
+    flex: 1 1 0;
+    text-align: center;
+    justify-content: center;
+    min-height: 38px;
+  }
+
+  .order-history-card {
+    padding: 14px 12px;
   }
 
   .admin-role-banner,
@@ -5499,21 +5652,15 @@ ul {
   }
 
   .admin-form-panel {
-    padding: 16px 14px;
-  }
-
-  .admin-table th,
-  .admin-table td {
-    padding: 10px;
-    font-size: 13px;
+    padding: 16px 12px;
   }
 
   .checkout-auth-gate {
-    padding: 22px 16px;
+    padding: 20px 14px;
   }
 
   .account-auth-box {
-    padding: 24px 16px;
+    padding: 22px 14px;
   }
 
   .blog-reader-img {
@@ -5526,5 +5673,12 @@ ul {
 
   .empty-cart-actions .btn {
     width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .stat-cards-grid.cols-3,
+  .stat-cards-grid.cols-4 {
+    grid-template-columns: 1fr;
   }
 }

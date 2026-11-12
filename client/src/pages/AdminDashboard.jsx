@@ -448,57 +448,59 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="dash-nav-group">
-              <span className="dash-nav-heading">Overview</span>
-              <nav className="dash-nav">
-                <NavLink
-                  to="/admin"
-                  end
-                  className={({ isActive }) =>
-                    'dash-nav-link' + (isActive && activeTab === 'overview' ? ' active' : '')
-                  }
-                >
-                  <ShieldIcon /> <span>Dashboard Home</span>
-                </NavLink>
-              </nav>
-            </div>
+            <div className="dash-nav-groups">
+              <div className="dash-nav-group">
+                <span className="dash-nav-heading">Overview</span>
+                <nav className="dash-nav">
+                  <NavLink
+                    to="/admin"
+                    end
+                    className={({ isActive }) =>
+                      'dash-nav-link' + (isActive && activeTab === 'overview' ? ' active' : '')
+                    }
+                  >
+                    <ShieldIcon /> <span>Dashboard Home</span>
+                  </NavLink>
+                </nav>
+              </div>
 
-            <div className="dash-nav-group">
-              <span className="dash-nav-heading">Catalog &amp; Fulfillment</span>
-              <nav className="dash-nav">
-                <NavLink to="/admin/products" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
-                  <BagIcon />
-                  <span>Products</span>
-                  <span className="dash-count-pill">{products.length}</span>
-                </NavLink>
-                <NavLink to="/admin/orders" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
-                  <TruckIcon />
-                  <span>Orders</span>
-                  <span className="dash-count-pill">{orders.length}</span>
-                </NavLink>
-                <Link to="/import" className="dash-nav-link">
-                  <CheckIcon /> <span>Excel / CSV Import ↗</span>
-                </Link>
-              </nav>
-            </div>
+              <div className="dash-nav-group">
+                <span className="dash-nav-heading">Catalog &amp; Fulfillment</span>
+                <nav className="dash-nav">
+                  <NavLink to="/admin/products" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
+                    <BagIcon />
+                    <span>Products</span>
+                    <span className="dash-count-pill">{products.length}</span>
+                  </NavLink>
+                  <NavLink to="/admin/orders" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
+                    <TruckIcon />
+                    <span>Orders</span>
+                    <span className="dash-count-pill">{orders.length}</span>
+                  </NavLink>
+                  <Link to="/import" className="dash-nav-link">
+                    <CheckIcon /> <span>Excel / CSV Import ↗</span>
+                  </Link>
+                </nav>
+              </div>
 
-            <div className="dash-nav-group">
-              <span className="dash-nav-heading">CMS &amp; Audience</span>
-              <nav className="dash-nav">
-                <NavLink to="/admin/blogs" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
-                  <HeartIcon />
-                  <span>Blog Posts</span>
-                  <span className="dash-count-pill">{blogs.length}</span>
-                </NavLink>
-                <NavLink to="/admin/content" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
-                  <ShieldIcon /> <span>Offers &amp; Banners</span>
-                </NavLink>
-                <NavLink to="/admin/users" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
-                  <UserIcon />
-                  <span>Users &amp; Subscribers</span>
-                  <span className="dash-count-pill">{allUsers.length}</span>
-                </NavLink>
-              </nav>
+              <div className="dash-nav-group">
+                <span className="dash-nav-heading">CMS &amp; Audience</span>
+                <nav className="dash-nav">
+                  <NavLink to="/admin/blogs" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
+                    <HeartIcon />
+                    <span>Blog Posts</span>
+                    <span className="dash-count-pill">{blogs.length}</span>
+                  </NavLink>
+                  <NavLink to="/admin/content" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
+                    <ShieldIcon /> <span>Offers &amp; Banners</span>
+                  </NavLink>
+                  <NavLink to="/admin/users" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
+                    <UserIcon />
+                    <span>Users &amp; Subscribers</span>
+                    <span className="dash-count-pill">{allUsers.length}</span>
+                  </NavLink>
+                </nav>
+              </div>
             </div>
 
             <div className="dash-sidebar-footer">
@@ -654,19 +656,19 @@ export default function AdminDashboard() {
                       <tbody>
                         {orders.slice(0, 6).map((o) => (
                           <tr key={o.id}>
-                            <td><strong>{o.id}</strong></td>
-                            <td>
+                            <td data-label="Order ID"><strong>{o.id}</strong></td>
+                            <td data-label="Customer">
                               <div className="table-primary-text">{o.customerName || 'Customer'}</div>
                               <span className="muted small">{o.email}</span>
                             </td>
-                            <td>{new Date(o.createdAt).toLocaleDateString('en-GB')}</td>
-                            <td><strong>{money(o.total)}</strong></td>
-                            <td>
+                            <td data-label="Date">{new Date(o.createdAt).toLocaleDateString('en-GB')}</td>
+                            <td data-label="Total"><strong>{money(o.total)}</strong></td>
+                            <td data-label="Status">
                               <span className={`status-badge ${getStatusClass(o.status)}`}>
                                 {o.status || 'Confirmed'}
                               </span>
                             </td>
-                            <td className="td-right">
+                            <td className="td-right" data-label="Action">
                               <div className="table-actions">
                                 <button
                                   type="button"
@@ -871,7 +873,7 @@ export default function AdminDashboard() {
                     <tbody>
                       {filteredProducts.slice(0, 60).map((p) => (
                         <tr key={p.handle}>
-                          <td>
+                          <td data-label="Product">
                             <div className="table-product-cell">
                               {p.image_url ? (
                                 <img src={p.image_url} alt={p.title} className="table-thumb" />
@@ -884,8 +886,8 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                           </td>
-                          <td>{p.brand}</td>
-                          <td>
+                          <td data-label="Brand">{p.brand}</td>
+                          <td data-label="Price">
                             <strong>{money(p.price)}</strong>
                             {p.compare_at_price && (
                               <span className="muted small" style={{ textDecoration: 'line-through', marginLeft: 6 }}>
@@ -893,12 +895,12 @@ export default function AdminDashboard() {
                               </span>
                             )}
                           </td>
-                          <td>
+                          <td data-label="Stock">
                             <span className={'status-badge ' + (p.in_stock !== false ? 'delivered' : 'cancelled')}>
                               {p.in_stock !== false ? 'In Stock' : 'Out of Stock'}
                             </span>
                           </td>
-                          <td className="td-right">
+                          <td className="td-right" data-label="Actions">
                             <div className="table-actions">
                               <button type="button" className="btn ghost btn-sm" onClick={() => openEditProduct(p)}>
                                 Edit
@@ -1033,20 +1035,20 @@ export default function AdminDashboard() {
                     <tbody>
                       {filteredOrders.map((o) => (
                         <tr key={o.id}>
-                          <td><strong>{o.id}</strong></td>
-                          <td>
+                          <td data-label="Order"><strong>{o.id}</strong></td>
+                          <td data-label="Customer">
                             <div className="table-primary-text">{o.customerName}</div>
                             <span className="muted small">{o.email}</span>
                           </td>
-                          <td>{new Date(o.createdAt).toLocaleDateString('en-GB')}</td>
-                          <td><strong>{money(o.total)}</strong></td>
-                          <td>
+                          <td data-label="Date">{new Date(o.createdAt).toLocaleDateString('en-GB')}</td>
+                          <td data-label="Total"><strong>{money(o.total)}</strong></td>
+                          <td data-label="Status">
                             <span className={`status-badge ${getStatusClass(o.status)}`}>
                               {o.status || 'Confirmed'}
                             </span>
                           </td>
-                          <td className="small">{o.trackingNumber || <span className="muted">Pending</span>}</td>
-                          <td className="td-right">
+                          <td className="small" data-label="Tracking">{o.trackingNumber || <span className="muted">Pending</span>}</td>
+                          <td className="td-right" data-label="Actions">
                             <div className="table-actions">
                               <button type="button" className="btn ghost btn-sm" onClick={() => openManageOrder(o)}>
                                 Manage
@@ -1190,18 +1192,18 @@ export default function AdminDashboard() {
                     <tbody>
                       {blogs.map((post) => (
                         <tr key={post.id}>
-                          <td>
+                          <td data-label="Title">
                             <div className="table-primary-text">{post.title}</div>
                             <div className="muted small">{post.readTime}</div>
                           </td>
-                          <td>{post.category}</td>
-                          <td>{post.date}</td>
-                          <td>
+                          <td data-label="Category">{post.category}</td>
+                          <td data-label="Date">{post.date}</td>
+                          <td data-label="Status">
                             <span className={'status-badge ' + (post.published !== false ? 'delivered' : 'processing')}>
                               {post.published !== false ? 'Published' : 'Draft'}
                             </span>
                           </td>
-                          <td className="td-right">
+                          <td className="td-right" data-label="Actions">
                             <div className="table-actions">
                               <button type="button" className="btn ghost btn-sm" onClick={() => openEditBlog(post)}>
                                 Edit
@@ -1413,15 +1415,15 @@ export default function AdminDashboard() {
                       <tbody>
                         {allUsers.map((u) => (
                           <tr key={u.email}>
-                            <td><strong>{u.name}</strong></td>
-                            <td>{u.email}</td>
-                            <td>
+                            <td data-label="Name"><strong>{u.name}</strong></td>
+                            <td data-label="Email">{u.email}</td>
+                            <td data-label="Role">
                               <span className={'role-pill ' + (u.role === 'admin' ? 'admin' : '')}>
                                 {u.role}
                               </span>
                             </td>
-                            <td>{u.city || '—'}</td>
-                            <td className="td-right">
+                            <td data-label="City">{u.city || '—'}</td>
+                            <td className="td-right" data-label="Actions">
                               <div className="table-actions">
                                 <button type="button" className="btn ghost btn-sm" onClick={() => openEditUser(u)}>
                                   Edit
@@ -1475,10 +1477,10 @@ export default function AdminDashboard() {
                         <tbody>
                           {subscribers.map((sub) => (
                             <tr key={sub.email}>
-                              <td><strong>{sub.email}</strong></td>
-                              <td>{sub.source || 'footer'}</td>
-                              <td>{sub.subscribed_at ? new Date(sub.subscribed_at).toLocaleDateString('en-GB') : '—'}</td>
-                              <td className="td-right">
+                              <td data-label="Email"><strong>{sub.email}</strong></td>
+                              <td data-label="Source">{sub.source || 'footer'}</td>
+                              <td data-label="Subscribed">{sub.subscribed_at ? new Date(sub.subscribed_at).toLocaleDateString('en-GB') : '—'}</td>
+                              <td className="td-right" data-label="Action">
                                 <div className="table-actions">
                                   <button
                                     type="button"

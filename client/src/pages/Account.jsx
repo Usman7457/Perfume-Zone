@@ -500,6 +500,7 @@ export default function Account({ forcedTab }) {
               </div>
             </div>
 
+            <div className="dash-nav-groups">
             <div className="dash-nav-group">
               <span className="dash-nav-heading">My Account</span>
               <nav className="dash-nav">
@@ -534,6 +535,7 @@ export default function Account({ forcedTab }) {
                   <span className="dash-count-pill">{wishlistCount}</span>
                 </Link>
               </nav>
+            </div>
             </div>
 
             <div className="dash-sidebar-footer">
