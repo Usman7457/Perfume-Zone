@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { NAV } from '../data/nav.js';
 import { useCart } from './CartContext.jsx';
 import { useWishlist } from './WishlistContext.jsx';
+import { useAuth } from './AuthContext.jsx';
 import CountrySelect from './CountrySelect.jsx';
 import { SearchIcon, UserIcon, BagIcon, MenuIcon, CloseIcon, PinIcon, HeartIcon } from './Icons.jsx';
 
@@ -16,6 +17,7 @@ export default function Header() {
   const location = useLocation();
   const { count, setOpen } = useCart();
   const { count: wishlistCount } = useWishlist();
+  const { user, isAdmin } = useAuth();
 
   const closeAll = () => {
     setHover(null);
@@ -62,6 +64,16 @@ export default function Header() {
 
         <div className="header-actions">
           <CountrySelect className="desktop-only" />
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={'header-admin-pill desktop-only' + (location.pathname.startsWith('/admin') ? ' active' : '')}
+              onClick={closeAll}
+              title="Open Admin Dashboard"
+            >
+              Admin
+            </Link>
+          )}
           <Link
             to="/wishlist"
             className={'icon-btn' + (location.pathname === '/wishlist' ? ' active' : '')}
@@ -73,13 +85,17 @@ export default function Header() {
             {wishlistCount > 0 && <span className="badge">{wishlistCount}</span>}
           </Link>
           <Link
-            to="/account"
-            className={'icon-btn desktop-only' + (location.pathname === '/account' ? ' active' : '')}
-            aria-label="My Account"
-            title="My Account"
+            to={isAdmin ? '/admin' : '/account'}
+            className={
+              'icon-btn desktop-only' +
+              (location.pathname.startsWith('/account') || location.pathname.startsWith('/admin') ? ' active' : '')
+            }
+            aria-label={user ? `Account: ${user.name}` : 'My Account / Sign In'}
+            title={user ? `${user.name} (${user.role})` : 'Sign In / My Account'}
             onClick={closeAll}
           >
             <UserIcon />
+            {user && <span className="auth-dot" aria-hidden="true" />}
           </Link>
           <button
             className={'icon-btn' + (searching ? ' active' : '')}
@@ -279,14 +295,14 @@ export default function Header() {
           </li>
         </ul>
         <Link
-          to="/account"
+          to={isAdmin ? '/admin' : '/account'}
           className="drawer-login"
           onClick={() => {
             setDrawer(false);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
-          My Account / Sign In
+          {isAdmin ? `Admin Dashboard (${user.name})` : user ? `My Account (${user.name})` : 'My Account / Sign In'}
         </Link>
       </aside>
     </header>

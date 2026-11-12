@@ -1,4 +1,5 @@
 import { INITIAL_PRODUCTS } from './data/products.js';
+import { INITIAL_BLOGS } from './data/blogs.js';
 
 // Track backend API availability to avoid repeated slow hangs
 let apiOnline = null; // null = untried, true = online, false = offline
@@ -179,9 +180,26 @@ const get = async (u, timeoutMs = 1500) => {
 
 const shouldTryApi = () => apiOnline !== false || Date.now() - lastHealthCheck > 15000;
 
+const CUSTOM_PRODUCTS_KEY = 'perfumezone_custom_products';
+const DELETED_PRODUCTS_KEY = 'perfumezone_deleted_products';
+const ORDERS_KEY = 'perfumezone_orders';
+const ORDERS_INIT_KEY = 'perfumezone_orders_init';
+const BLOGS_KEY = 'perfumezone_blogs';
+const SUBSCRIBERS_KEY = 'perfumezone_subscribers';
+const SUBSCRIBERS_INIT_KEY = 'perfumezone_subscribers_init';
+const SITE_SETTINGS_KEY = 'perfumezone_site_settings';
+
 export const getCustomProducts = () => {
   try {
-    return JSON.parse(localStorage.getItem('perfumezone_custom_products')) || [];
+    return JSON.parse(localStorage.getItem(CUSTOM_PRODUCTS_KEY)) || [];
+  } catch {
+    return [];
+  }
+};
+
+export const getDeletedProductHandles = () => {
+  try {
+    return JSON.parse(localStorage.getItem(DELETED_PRODUCTS_KEY)) || [];
   } catch {
     return [];
   }
@@ -200,7 +218,14 @@ export const saveImportedProducts = (newProducts, replaceAll = false) => {
         merged.push(p);
       }
     }
-    localStorage.setItem('perfumezone_custom_products', JSON.stringify(merged));
+    localStorage.setItem(CUSTOM_PRODUCTS_KEY, JSON.stringify(merged));
+
+    // Unhide any handles that were previously deleted
+    const importedHandles = new Set(newProducts.map((p) => p.handle));
+    const nextDeleted = getDeletedProductHandles().filter((h) => !importedHandles.has(h));
+    localStorage.setItem(DELETED_PRODUCTS_KEY, JSON.stringify(nextDeleted));
+
+    window.dispatchEvent(new Event('pz:products-change'));
 
     // Background sync to API if available
     fetch('/api/import', {
@@ -208,7 +233,7 @@ export const saveImportedProducts = (newProducts, replaceAll = false) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ products: newProducts }),
       signal: AbortSignal.timeout ? AbortSignal.timeout(2000) : undefined
-    }).catch(() => { });
+    }).catch(() => {});
 
     return merged;
   } catch (err) {
@@ -217,22 +242,81 @@ export const saveImportedProducts = (newProducts, replaceAll = false) => {
   }
 };
 
+export const saveProductAdmin = (product) => {
+  const cleanHandle =
+    String(product.handle || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[\s\W-]+/g, '-')
+      .replace(/^-+|-+$/g, '') ||
+    String(product.title || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[\s\W-]+/g, '-')
+      .replace(/^-+|-+$/g, '') ||
+    'product-' + Date.now();
+
+  const normalized = {
+    id: product.id || Date.now(),
+    handle: cleanHandle,
+    title: String(product.title || 'Untitled Fragrance').trim(),
+    brand: String(product.brand || 'Perfume Zone').trim(),
+    price: Number(product.price || 0),
+    compare_at_price:
+      product.compare_at_price !== '' && product.compare_at_price != null
+        ? Number(product.compare_at_price)
+        : null,
+    image_url:
+      String(product.image_url || '').trim() ||
+      'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
+    image_url_2: String(product.image_url_2 || '').trim() || '',
+    description: String(product.description || '').trim(),
+    size: String(product.size || '100ml Eau De Parfum').trim(),
+    collections: String(product.collections || 'new-in|all').trim(),
+    notes: product.notes || { top: '', middle: '', base: '' },
+    in_stock: product.in_stock === 0 || product.in_stock === false ? 0 : 1
+  };
+
+  saveImportedProducts([normalized], false);
+  return normalized;
+};
+
+export const deleteProductAdmin = (handle) => {
+  try {
+    const custom = getCustomProducts().filter((p) => p.handle !== handle);
+    localStorage.setItem(CUSTOM_PRODUCTS_KEY, JSON.stringify(custom));
+
+    const deleted = new Set(getDeletedProductHandles());
+    deleted.add(handle);
+    localStorage.setItem(DELETED_PRODUCTS_KEY, JSON.stringify([...deleted]));
+    window.dispatchEvent(new Event('pz:products-change'));
+  } catch (err) {
+    console.error('Failed to delete product', err);
+  }
+};
+
 export const clearCustomProducts = () => {
-  localStorage.removeItem('perfumezone_custom_products');
+  localStorage.removeItem(CUSTOM_PRODUCTS_KEY);
+  localStorage.removeItem(DELETED_PRODUCTS_KEY);
+  window.dispatchEvent(new Event('pz:products-change'));
 };
 
 export const getAllLocalProducts = () => {
   const custom = getCustomProducts();
+  const deleted = new Set(getDeletedProductHandles());
   const customHandles = new Set(custom.map((p) => p.handle));
-  const base = INITIAL_PRODUCTS.filter((p) => !customHandles.has(p.handle));
-  return [...custom, ...base];
+  const base = INITIAL_PRODUCTS.filter((p) => !customHandles.has(p.handle) && !deleted.has(p.handle));
+  return [...custom.filter((p) => !deleted.has(p.handle)), ...base];
 };
+
+const hasLocalCatalogEdits = () =>
+  getCustomProducts().length > 0 || getDeletedProductHandles().length > 0;
 
 export const getProducts = async (params = {}) => {
   const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== ''));
 
-  // Attempt API query (PostgreSQL backend)
-  if (shouldTryApi()) {
+  // Attempt API query when no unsynced local CMS deletions/overrides take precedence
+  if (shouldTryApi() && !hasLocalCatalogEdits()) {
     try {
       const res = await get('/api/products?' + qs.toString(), 2000);
       if (res && Array.isArray(res.products)) {
@@ -303,6 +387,12 @@ export const getProducts = async (params = {}) => {
 };
 
 export const getProduct = async (handle) => {
+  const deleted = new Set(getDeletedProductHandles());
+  if (deleted.has(handle)) throw new Error('404');
+
+  const customMatch = getCustomProducts().find((p) => p.handle === handle);
+  if (customMatch) return customMatch;
+
   if (shouldTryApi()) {
     try {
       const res = await get('/api/products/' + handle, 2000);
@@ -339,14 +429,116 @@ export const getCollection = async (handle = 'all') => {
   return local;
 };
 
+const SEED_ORDERS = [
+  {
+    id: 'PZ-100001',
+    email: 'demo@perfumezone.uk',
+    customerName: 'Demo Customer',
+    shippingAddress: {
+      firstName: 'Demo',
+      lastName: 'Customer',
+      address: '10 Oxford Street',
+      apartment: 'Flat 2B',
+      city: 'London',
+      postcode: 'W1D 1BS',
+      country: 'United Kingdom',
+      phone: '+44 7700 900123'
+    },
+    items: [
+      {
+        id: 1,
+        handle: 'oud-elixir-dubai-oud-intense',
+        title: 'Oud Elixir Dubai Oud Intense',
+        brand: 'Oud Elixir',
+        size: '100ml Extrait De Parfum',
+        price: 65.0,
+        qty: 1,
+        image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        id: 4,
+        handle: 'lattafa-khamrah',
+        title: 'Lattafa Khamrah Luxury Edition',
+        brand: 'Lattafa',
+        size: '100ml Eau De Parfum',
+        price: 42.0,
+        qty: 1,
+        image: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&w=800&q=80'
+      }
+    ],
+    shippingMethod: 'free',
+    shippingCost: 0,
+    subtotal: 107.0,
+    discount: 10.7,
+    couponCode: 'PERFUME10',
+    total: 96.3,
+    paymentMethod: 'card',
+    status: 'Dispatched',
+    trackingNumber: 'RM984512004GB',
+    courier: 'Royal Mail Tracked 48',
+    adminNote: 'Insulated luxury gift box dispatched from London hub.',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
+  }
+];
+
+function ensureLocalOrdersInitialized() {
+  try {
+    const initialized = localStorage.getItem(ORDERS_INIT_KEY);
+    const existing = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
+    if (!initialized) {
+      const merged = existing.length ? existing : SEED_ORDERS;
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(merged));
+      localStorage.setItem(ORDERS_INIT_KEY, '1');
+      return merged;
+    }
+    return Array.isArray(existing) ? existing : [];
+  } catch {
+    return [...SEED_ORDERS];
+  }
+}
+
+function readSubscribersLocal() {
+  try {
+    const initialized = localStorage.getItem(SUBSCRIBERS_INIT_KEY);
+    const existing = JSON.parse(localStorage.getItem(SUBSCRIBERS_KEY) || '[]');
+    if (!initialized) {
+      const seeded = existing.length
+        ? existing
+        : [
+            { email: 'demo@perfumezone.uk', source: 'checkout', status: 'subscribed', subscribed_at: new Date().toISOString() },
+            { email: 'newsletter@perfumezone.uk', source: 'footer', status: 'subscribed', subscribed_at: new Date().toISOString() }
+          ];
+      localStorage.setItem(SUBSCRIBERS_KEY, JSON.stringify(seeded));
+      localStorage.setItem(SUBSCRIBERS_INIT_KEY, '1');
+      return seeded;
+    }
+    return Array.isArray(existing) ? existing : [];
+  } catch {
+    return [];
+  }
+}
+
 export const subscribe = async (email, source = 'footer') => {
+  const clean = String(email || '').trim().toLowerCase();
+  if (!/^\S+@\S+\.\S+$/.test(clean)) {
+    return { ok: false, error: 'Please enter a valid email address.' };
+  }
+
+  try {
+    const subs = readSubscribersLocal();
+    if (!subs.some((s) => (s.email || '').toLowerCase() === clean)) {
+      subs.unshift({ email: clean, source, status: 'subscribed', subscribed_at: new Date().toISOString() });
+      localStorage.setItem(SUBSCRIBERS_KEY, JSON.stringify(subs));
+    }
+  } catch {}
+
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 2500);
     const r = await fetch('/api/newsletter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, source }),
+      body: JSON.stringify({ email: clean, source }),
       signal: controller.signal
     });
     clearTimeout(timer);
@@ -360,14 +552,45 @@ export const subscribe = async (email, source = 'footer') => {
   }
 };
 
+export const getSubscribersAdmin = async () => {
+  const localSubs = readSubscribersLocal();
+  if (shouldTryApi()) {
+    try {
+      const data = await get('/api/subscribers', 1500);
+      if (data && Array.isArray(data.subscribers)) {
+        const seen = new Set(localSubs.map((s) => (s.email || '').toLowerCase()));
+        const combined = [...localSubs];
+        for (const s of data.subscribers) {
+          if (!seen.has((s.email || '').toLowerCase())) combined.push(s);
+        }
+        return combined;
+      }
+    } catch {}
+  }
+  return localSubs;
+};
+
+export const deleteSubscriberAdmin = (email) => {
+  const clean = String(email || '').trim().toLowerCase();
+  const next = readSubscribersLocal().filter((s) => (s.email || '').toLowerCase() !== clean);
+  localStorage.setItem(SUBSCRIBERS_KEY, JSON.stringify(next));
+  return next;
+};
+
 export const createOrder = async (orderData) => {
   const orderId = 'PZ-' + Math.floor(100000 + Math.random() * 900000);
   let finalOrder = {
     id: orderId,
     createdAt: new Date().toISOString(),
     status: 'Confirmed',
+    trackingNumber: '',
+    courier: 'Royal Mail Tracked',
     ...orderData
   };
+
+  if (orderData?.newsletter && orderData?.email) {
+    subscribe(orderData.email, 'checkout').catch(() => {});
+  }
 
   try {
     const controller = new AbortController();
@@ -381,16 +604,16 @@ export const createOrder = async (orderData) => {
     clearTimeout(timer);
     if (r.ok) {
       const res = await r.json();
-      if (res && res.order) finalOrder = res.order;
+      if (res && res.order) finalOrder = { ...finalOrder, ...res.order };
       apiOnline = true;
       lastHealthCheck = Date.now();
     }
-  } catch { }
+  } catch {}
 
   try {
-    const orders = JSON.parse(localStorage.getItem('perfumezone_orders')) || [];
+    const orders = ensureLocalOrdersInitialized();
     orders.unshift(finalOrder);
-    localStorage.setItem('perfumezone_orders', JSON.stringify(orders));
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
   } catch (e) {
     console.error(e);
   }
@@ -399,6 +622,11 @@ export const createOrder = async (orderData) => {
 };
 
 export const getOrderById = async (id) => {
+  const cleanId = String(id || '').trim().toUpperCase();
+  const localOrders = ensureLocalOrdersInitialized();
+  const localMatch = localOrders.find((o) => String(o.id || '').toUpperCase() === cleanId);
+  if (localMatch) return localMatch;
+
   if (shouldTryApi()) {
     try {
       const controller = new AbortController();
@@ -411,18 +639,17 @@ export const getOrderById = async (id) => {
         lastHealthCheck = Date.now();
         if (data && data.id) return data;
       }
-    } catch { }
+    } catch {}
   }
 
-  try {
-    const orders = JSON.parse(localStorage.getItem('perfumezone_orders')) || [];
-    return orders.find((o) => o.id === id);
-  } catch {
-    return null;
-  }
+  return null;
 };
 
 export const getUserOrders = async (email) => {
+  const localOrders = ensureLocalOrdersInitialized().filter(
+    (o) => (o.email || '').toLowerCase() === (email || '').toLowerCase()
+  );
+
   let apiOrders = [];
   if (shouldTryApi()) {
     try {
@@ -436,18 +663,134 @@ export const getUserOrders = async (email) => {
         lastHealthCheck = Date.now();
         if (data && Array.isArray(data.orders)) apiOrders = data.orders;
       }
-    } catch { }
+    } catch {}
   }
 
+  const seenIds = new Set(localOrders.map((o) => o.id));
+  return [...localOrders, ...apiOrders.filter((o) => !seenIds.has(o.id))];
+};
+
+export const getAllOrdersAdmin = () => ensureLocalOrdersInitialized();
+
+export const updateOrderAdmin = (orderId, patch) => {
+  const orders = ensureLocalOrdersInitialized();
+  const idx = orders.findIndex((o) => o.id === orderId);
+  if (idx === -1) return null;
+  orders[idx] = { ...orders[idx], ...patch, updatedAt: new Date().toISOString() };
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+  return orders[idx];
+};
+
+export const deleteOrderAdmin = (orderId) => {
+  const next = ensureLocalOrdersInitialized().filter((o) => o.id !== orderId);
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(next));
+  return next;
+};
+
+// Blogs CMS Helpers
+export const getBlogs = (includeDrafts = false) => {
+  let list;
   try {
-    const orders = JSON.parse(localStorage.getItem('perfumezone_orders')) || [];
-    const localOrders = orders.filter((o) => (o.email || '').toLowerCase() === (email || '').toLowerCase());
-    if (apiOrders.length === 0) return localOrders;
-    const seenIds = new Set(apiOrders.map((o) => o.id));
-    return [...apiOrders, ...localOrders.filter((o) => !seenIds.has(o.id))];
+    const raw = JSON.parse(localStorage.getItem(BLOGS_KEY));
+    list = Array.isArray(raw) ? raw : INITIAL_BLOGS;
   } catch {
-    return apiOrders;
+    list = INITIAL_BLOGS;
   }
+  return includeDrafts ? list : list.filter((b) => b.published !== false);
+};
+
+export const saveBlogAdmin = (post) => {
+  const list = getBlogs(true);
+  const slug =
+    post.slug ||
+    String(post.title || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[\s\W-]+/g, '-')
+      .replace(/^-+|-+$/g, '') ||
+    'post-' + Date.now();
+
+  const normalized = {
+    id: post.id || Date.now(),
+    slug,
+    title: String(post.title || 'Untitled Article').trim(),
+    category: String(post.category || 'Fragrance Insights').trim(),
+    date: String(
+      post.date ||
+        new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+    ).trim(),
+    readTime: String(post.readTime || '4 min read').trim(),
+    img:
+      String(post.img || '').trim() ||
+      'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=800&q=80',
+    excerpt: String(post.excerpt || '').trim(),
+    content: String(post.content || post.excerpt || '').trim(),
+    published: post.published !== false
+  };
+
+  const idx = list.findIndex((b) => b.id === normalized.id);
+  const next = idx >= 0 ? list.map((b) => (b.id === normalized.id ? normalized : b)) : [normalized, ...list];
+  localStorage.setItem(BLOGS_KEY, JSON.stringify(next));
+  window.dispatchEvent(new Event('pz:blogs-change'));
+  return normalized;
+};
+
+export const deleteBlogAdmin = (id) => {
+  const next = getBlogs(true).filter((b) => b.id !== id);
+  localStorage.setItem(BLOGS_KEY, JSON.stringify(next));
+  window.dispatchEvent(new Event('pz:blogs-change'));
+  return next;
+};
+
+export const resetBlogsAdmin = () => {
+  localStorage.removeItem(BLOGS_KEY);
+  window.dispatchEvent(new Event('pz:blogs-change'));
+  return INITIAL_BLOGS;
+};
+
+// Storefront Content / Site Settings CMS Helpers
+export const DEFAULT_SITE_SETTINGS = {
+  announcements: [
+    'Free UK delivery on all orders over £50 • perfumezone.uk',
+    '100% Genuine Arabian Luxury Perfumes & Rare Oud',
+    'Use code PERFUME10 at checkout for 10% off your order'
+  ],
+  promoCode: 'PERFUME10',
+  promoTitle: '10% Off Your Entire Order',
+  promoDescription: 'Enjoy 10% off your entire first purchase across all collections with no minimum spend required.',
+  offersHeadline: 'Perfume Zone Special Offers',
+  offersSubheadline:
+    'Experience world-class Arabian fragrances with our current promotions, complimentary gifts, and limited-time savings at perfumezone.uk.'
+};
+
+export const getSiteSettings = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SITE_SETTINGS_KEY));
+    if (raw && typeof raw === 'object') {
+      return {
+        ...DEFAULT_SITE_SETTINGS,
+        ...raw,
+        announcements:
+          Array.isArray(raw.announcements) && raw.announcements.length
+            ? raw.announcements
+            : DEFAULT_SITE_SETTINGS.announcements
+      };
+    }
+  } catch {}
+  return DEFAULT_SITE_SETTINGS;
+};
+
+export const saveSiteSettings = (patch) => {
+  const next = { ...getSiteSettings(), ...patch };
+  localStorage.setItem(SITE_SETTINGS_KEY, JSON.stringify(next));
+  window.dispatchEvent(new Event('pz:settings-change'));
+  return next;
+};
+
+export const resetSiteSettings = () => {
+  localStorage.removeItem(SITE_SETTINGS_KEY);
+  window.dispatchEvent(new Event('pz:settings-change'));
+  return DEFAULT_SITE_SETTINGS;
 };
 
 export const money = (n) => '£' + Number(n || 0).toFixed(2);

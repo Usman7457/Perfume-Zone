@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 import App from './App.jsx';
+import { AuthProvider } from './components/AuthContext.jsx';
 import { CartProvider } from './components/CartContext.jsx';
 import { WishlistProvider } from './components/WishlistContext.jsx';
 
@@ -31,10 +32,12 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
-    <CartProvider>
-      <WishlistProvider>
-        <App />
-      </WishlistProvider>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <WishlistProvider>
+          <App />
+        </WishlistProvider>
+      </CartProvider>
+    </AuthProvider>
   </BrowserRouter>
 );

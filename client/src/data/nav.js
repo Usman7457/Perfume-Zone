@@ -132,6 +132,7 @@ export const FOOTER = {
   company: [
     ['About Us', '/pages/about-us'],
     ['Find a Store', '/tools/locations'],
+    ['Track Your Order', '/account/track-order'],
     ['Wholesale & B2B', '/pages/wholesale'],
     ['Contact Us', '/pages/contact-us'],
     ['FAQ', '/pages/faqs'],

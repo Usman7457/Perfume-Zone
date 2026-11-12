@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../components/CartContext.jsx';
+import { useAuth } from '../components/AuthContext.jsx';
 import { money, createOrder } from '../api.js';
 import { LockIcon, ShieldIcon, TruckIcon, CheckIcon } from '../components/Icons.jsx';
 
@@ -15,7 +16,16 @@ export default function Checkout() {
     clearCart,
     freeShippingThreshold
   } = useCart();
+  const { user, login, register, updateProfile, logout } = useAuth();
   const nav = useNavigate();
+
+  // Checkout Auth Gate state
+  const [authTab, setAuthTab] = useState('login');
+  const [authName, setAuthName] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authPhone, setAuthPhone] = useState('');
+  const [authError, setAuthError] = useState('');
 
   // Form states
   const [email, setEmail] = useState('');
@@ -28,6 +38,53 @@ export default function Checkout() {
   const [postcode, setPostcode] = useState('');
   const [country, setCountry] = useState('United Kingdom');
   const [phone, setPhone] = useState('');
+
+  useEffect(() => {
+    if (!user) return;
+    const parts = (user.name || '').trim().split(/\s+/);
+    const fName = parts[0] || '';
+    const lName = parts.slice(1).join(' ') || '';
+    setEmail((prev) => prev || user.email || '');
+    setFirstName((prev) => prev || fName);
+    setLastName((prev) => prev || lName);
+    setAddress((prev) => prev || user.address || '');
+    setApartment((prev) => prev || user.apartment || '');
+    setCity((prev) => prev || user.city || '');
+    setPostcode((prev) => prev || user.postcode || '');
+    setCountry((prev) => prev || user.country || 'United Kingdom');
+    setPhone((prev) => prev || user.phone || '');
+  }, [user]);
+
+  const handleGateLogin = (e) => {
+    e.preventDefault();
+    setAuthError('');
+    const res = login(authEmail, authPassword);
+    if (!res.ok) {
+      setAuthError(res.error);
+      return;
+    }
+    setAuthPassword('');
+  };
+
+  const handleGateRegister = (e) => {
+    e.preventDefault();
+    setAuthError('');
+    if (!authName.trim() || !authEmail.trim() || authPassword.length < 6) {
+      setAuthError('Please enter your full name, email address, and a password of at least 6 characters.');
+      return;
+    }
+    const res = register({
+      name: authName,
+      email: authEmail,
+      password: authPassword,
+      phone: authPhone
+    });
+    if (!res.ok) {
+      setAuthError(res.error);
+      return;
+    }
+    setAuthPassword('');
+  };
 
   // Shipping Method
   const isFreeStandard = subtotal >= freeShippingThreshold || coupon?.type === 'free_shipping';
@@ -82,12 +139,18 @@ export default function Checkout() {
       return;
     }
 
+    if (!user) {
+      setFormError('Please sign in or create an account before placing an order.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       const orderPayload = {
-        email,
-        customerName: `${firstName} ${lastName}`.trim(),
+        email: email || user.email,
+        customerName: `${firstName} ${lastName}`.trim() || user.name,
+        userId: user.id,
         shippingAddress: {
           firstName,
           lastName,
@@ -119,6 +182,14 @@ export default function Checkout() {
       };
 
       const newOrder = await createOrder(orderPayload);
+      updateProfile({
+        phone,
+        address,
+        apartment,
+        city,
+        postcode,
+        country
+      });
       clearCart();
       nav('/order-confirmation/' + newOrder.id, { state: { order: newOrder } });
     } catch (err) {
@@ -154,50 +225,195 @@ export default function Checkout() {
       </header>
 
       <div className="checkout-grid">
-        {/* Left Column: Form Details */}
+        {/* Left Column: Auth Gate or Checkout Form Details */}
         <div className="checkout-main">
-          {formError && <div className="checkout-error-banner">{formError}</div>}
-
-          {/* Express Checkout */}
-          <div className="express-checkout-box">
-            <span className="express-title">Express Checkout</span>
-            <div className="express-buttons">
-              <button
-                type="button"
-                className="express-btn shop-pay"
-                onClick={() => alert('Express Checkout with Shop Pay is simulated. Please fill in the details below.')}
-              >
-                Shop Pay
-              </button>
-              <button
-                type="button"
-                className="express-btn g-pay"
-                onClick={() => alert('Express Checkout with GPay is simulated. Please fill in the details below.')}
-              >
-                Google Pay
-              </button>
-              <button
-                type="button"
-                className="express-btn apple-pay"
-                onClick={() => alert('Express Checkout with Apple Pay is simulated. Please fill in the details below.')}
-              >
-                Apple Pay
-              </button>
-            </div>
-            <div className="or-divider">
-              <span>OR CONTINUE BELOW</span>
-            </div>
-          </div>
-
-          <form onSubmit={handlePlaceOrder} className="checkout-form">
-            {/* Step 1: Contact Information */}
-            <section className="checkout-section">
-              <div className="section-head-row">
-                <h3>1. Contact Information</h3>
-                <Link to="/account" className="login-hint">
-                  Already have an account? Sign in
-                </Link>
+          {!user ? (
+            <div className="checkout-auth-gate">
+              <div className="checkout-auth-head">
+                <span className="eyebrow">Account Required to Checkout</span>
+                <h2>Sign In or Create an Account</h2>
+                <p className="muted">
+                  Please sign in to your Perfume Zone account—or create a free customer account in seconds—to place your order and track delivery.
+                </p>
               </div>
+
+              <div className="account-tabs" style={{ marginBottom: 20 }}>
+                <button
+                  type="button"
+                  className={authTab === 'login' ? 'active' : ''}
+                  onClick={() => { setAuthTab('login'); setAuthError(''); }}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  className={authTab === 'register' ? 'active' : ''}
+                  onClick={() => { setAuthTab('register'); setAuthError(''); }}
+                >
+                  Create Account
+                </button>
+              </div>
+
+              {authError && <div className="checkout-error-banner">{authError}</div>}
+
+              {authTab === 'login' ? (
+                <form onSubmit={handleGateLogin} className="checkout-form" style={{ gap: 16 }}>
+                  <div className="form-group">
+                    <label htmlFor="gate-email">Email Address *</label>
+                    <input
+                      id="gate-email"
+                      type="email"
+                      required
+                      placeholder="e.g. name@example.co.uk"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="gate-password">Password *</label>
+                    <input
+                      id="gate-password"
+                      type="password"
+                      required
+                      placeholder="Enter your password"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                    />
+                  </div>
+                  <button type="submit" className="btn wide">
+                    Sign In &amp; Continue to Shipping
+                  </button>
+                  <p className="muted small" style={{ textAlign: 'center', margin: 0 }}>
+                    New to Perfume Zone?{' '}
+                    <button
+                      type="button"
+                      className="link-inline-btn"
+                      onClick={() => { setAuthTab('register'); setAuthError(''); }}
+                    >
+                      Create an account first
+                    </button>
+                  </p>
+                </form>
+              ) : (
+                <form onSubmit={handleGateRegister} className="checkout-form" style={{ gap: 16 }}>
+                  <div className="form-group">
+                    <label htmlFor="gate-reg-name">Full Name *</label>
+                    <input
+                      id="gate-reg-name"
+                      type="text"
+                      required
+                      placeholder="e.g. Sophie Bennett"
+                      value={authName}
+                      onChange={(e) => setAuthName(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-row-2">
+                    <div className="form-group">
+                      <label htmlFor="gate-reg-email">Email Address *</label>
+                      <input
+                        id="gate-reg-email"
+                        type="email"
+                        required
+                        placeholder="sophie@example.co.uk"
+                        value={authEmail}
+                        onChange={(e) => setAuthEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="gate-reg-phone">Phone Number</label>
+                      <input
+                        id="gate-reg-phone"
+                        type="tel"
+                        placeholder="+44 7700 900000"
+                        value={authPhone}
+                        onChange={(e) => setAuthPhone(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="gate-reg-password">Create Password * (min 6 characters)</label>
+                    <input
+                      id="gate-reg-password"
+                      type="password"
+                      required
+                      minLength={6}
+                      placeholder="Create a secure password"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                    />
+                  </div>
+                  <button type="submit" className="btn wide">
+                    Create Account &amp; Continue to Checkout
+                  </button>
+                </form>
+              )}
+
+              <div className="checkout-guarantee" style={{ marginTop: 24 }}>
+                <div className="guarantee-item">
+                  <ShieldIcon /> Order history &amp; live parcel tracking saved to your account
+                </div>
+                <div className="guarantee-item">
+                  <TruckIcon /> Express UK Royal Mail &amp; DPD courier checkout
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="checkout-signed-in-bar">
+                <div>
+                  <strong>Signed in as {user.name}</strong>
+                  <span className="muted"> ({user.email})</span>
+                </div>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <Link to={user.role === 'admin' ? '/admin' : '/account/orders'} className="login-hint">
+                    {user.role === 'admin' ? 'Admin Dashboard' : 'My Account'}
+                  </Link>
+                  <button type="button" className="link-inline-btn" onClick={logout}>
+                    Switch Account
+                  </button>
+                </div>
+              </div>
+
+              {formError && <div className="checkout-error-banner">{formError}</div>}
+
+              {/* Express Checkout */}
+              <div className="express-checkout-box">
+                <span className="express-title">Express Checkout</span>
+                <div className="express-buttons">
+                  <button
+                    type="button"
+                    className="express-btn shop-pay"
+                    onClick={() => alert('Express Checkout with Shop Pay is simulated. Please fill in the details below.')}
+                  >
+                    Shop Pay
+                  </button>
+                  <button
+                    type="button"
+                    className="express-btn g-pay"
+                    onClick={() => alert('Express Checkout with GPay is simulated. Please fill in the details below.')}
+                  >
+                    Google Pay
+                  </button>
+                  <button
+                    type="button"
+                    className="express-btn apple-pay"
+                    onClick={() => alert('Express Checkout with Apple Pay is simulated. Please fill in the details below.')}
+                  >
+                    Apple Pay
+                  </button>
+                </div>
+                <div className="or-divider">
+                  <span>OR CONTINUE BELOW</span>
+                </div>
+              </div>
+
+              <form onSubmit={handlePlaceOrder} className="checkout-form">
+                {/* Step 1: Contact Information */}
+                <section className="checkout-section">
+                  <div className="section-head-row">
+                    <h3>1. Contact Information</h3>
+                    <span className="muted small">Account Verified ✓</span>
+                  </div>
 
               <div className="form-group">
                 <label htmlFor="checkout-email">Email Address *</label>
@@ -521,6 +737,8 @@ export default function Checkout() {
               </div>
             </div>
           </form>
+            </>
+          )}
         </div>
 
         {/* Right Column: Order Summary Sidebar */}

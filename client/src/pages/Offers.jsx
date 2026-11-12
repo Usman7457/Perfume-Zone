@@ -1,22 +1,29 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getProducts } from '../api.js';
+import { getProducts, getSiteSettings } from '../api.js';
 import ProductCard from '../components/ProductCard.jsx';
 
 export default function Offers() {
   const [saleItems, setSaleItems] = useState([]);
+  const [settings, setSettings] = useState(() => getSiteSettings());
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    let ignore = false;
+  const loadProducts = () => {
     getProducts({ limit: 12 }).then((r) => {
-      if (ignore || !r?.products) return;
-      // Find items on sale or feature high-value items
+      if (!r?.products) return;
       const discounted = r.products.filter((p) => p.compare_at_price && p.compare_at_price > p.price);
       setSaleItems(discounted.length ? discounted : r.products.slice(0, 8));
     }).catch(() => {});
+  };
+
+  useEffect(() => {
+    loadProducts();
+    const syncSettings = () => setSettings(getSiteSettings());
+    window.addEventListener('pz:settings-change', syncSettings);
+    window.addEventListener('pz:products-change', loadProducts);
     return () => {
-      ignore = true;
+      window.removeEventListener('pz:settings-change', syncSettings);
+      window.removeEventListener('pz:products-change', loadProducts);
     };
   }, []);
 
@@ -26,13 +33,16 @@ export default function Offers() {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const activeCode = settings.promoCode || 'PERFUME10';
+
   return (
     <div className="container offers-page">
       <header className="page-header center">
         <span className="eyebrow">EXCLUSIVE DEALS &amp; PROMOTIONS</span>
-        <h1>Perfume Zone Special Offers</h1>
+        <h1>{settings.offersHeadline || 'Perfume Zone Special Offers'}</h1>
         <p className="muted max-prose">
-          Experience world-class Arabian fragrances with our current promotions, complimentary gifts, and limited-time savings at <strong>perfumezone.uk</strong>.
+          {settings.offersSubheadline ||
+            'Experience world-class Arabian fragrances with our current promotions, complimentary gifts, and limited-time savings at perfumezone.uk.'}
         </p>
       </header>
 
@@ -40,14 +50,17 @@ export default function Offers() {
       <div className="offers-deals-grid">
         <div className="offer-deal-card highlighted">
           <span className="deal-pill">NEW CUSTOMER SPECIAL</span>
-          <h3>10% Off Your Entire Order</h3>
-          <p className="muted">Enjoy 10% off your entire first purchase across all collections with no minimum spend required.</p>
+          <h3>{settings.promoTitle || '10% Off Your Entire Order'}</h3>
+          <p className="muted">
+            {settings.promoDescription ||
+              'Enjoy 10% off your entire first purchase across all collections with no minimum spend required.'}
+          </p>
           <div className="promo-code-box">
-            <code>PERFUME10</code>
+            <code>{activeCode}</code>
             <button
               type="button"
               className="copy-btn"
-              onClick={() => copyCode('PERFUME10')}
+              onClick={() => copyCode(activeCode)}
             >
               {copied ? 'Copied!' : 'Copy Code'}
             </button>

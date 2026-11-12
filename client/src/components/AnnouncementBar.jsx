@@ -1,20 +1,32 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-
-const MSGS = [
-  'Free UK delivery on all orders over £50 • perfumezone.uk',
-  '100% Genuine Arabian Luxury Perfumes & Rare Oud',
-  'Use code PERFUME10 at checkout for 10% off your order'
-];
+import { getSiteSettings } from '../api.js';
 
 export default function AnnouncementBar() {
+  const [msgs, setMsgs] = useState(() => getSiteSettings().announcements);
   const [i, setI] = useState(0);
 
   useEffect(() => {
-    if (MSGS.length < 2) return;
-    const t = setInterval(() => setI((n) => (n + 1) % MSGS.length), 4500);
-    return () => clearInterval(t);
+    const sync = () => {
+      const next = getSiteSettings().announcements || [];
+      setMsgs(next);
+      setI(0);
+    };
+    window.addEventListener('pz:settings-change', sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener('pz:settings-change', sync);
+      window.removeEventListener('storage', sync);
+    };
   }, []);
+
+  useEffect(() => {
+    if (msgs.length < 2) return;
+    const t = setInterval(() => setI((n) => (n + 1) % msgs.length), 4500);
+    return () => clearInterval(t);
+  }, [msgs]);
+
+  const currentMsg = msgs[i % Math.max(msgs.length, 1)] || '';
 
   return (
     <div className="announce">
@@ -22,14 +34,14 @@ export default function AnnouncementBar() {
         <div className="announce-msg">
           <button
             aria-label="Previous announcement"
-            onClick={() => setI((i + MSGS.length - 1) % MSGS.length)}
+            onClick={() => setI((i + msgs.length - 1) % Math.max(msgs.length, 1))}
           >
             ‹
           </button>
-          <span>{MSGS[i]}</span>
+          <span>{currentMsg}</span>
           <button
             aria-label="Next announcement"
-            onClick={() => setI((i + 1) % MSGS.length)}
+            onClick={() => setI((i + 1) % Math.max(msgs.length, 1))}
           >
             ›
           </button>

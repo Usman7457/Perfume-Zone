@@ -17,6 +17,7 @@ import Wishlist from './pages/Wishlist.jsx';
 import ImportProducts from './pages/ImportProducts.jsx';
 import Search from './pages/Search.jsx';
 import Account from './pages/Account.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
 import Contact from './pages/Contact.jsx';
 import About from './pages/About.jsx';
 import Faq from './pages/Faq.jsx';
@@ -51,8 +52,12 @@ export default function App() {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/import" element={<ImportProducts />} />
           <Route path="/admin/import" element={<ImportProducts />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/:tab" element={<AdminDashboard />} />
           <Route path="/search" element={<Search />} />
           <Route path="/account" element={<Account />} />
+          <Route path="/account/:tab" element={<Account />} />
+          <Route path="/track-order" element={<Account forcedTab="track-order" />} />
           
           {/* Dedicated Informational Pages */}
           <Route path="/pages/contact-us" element={<Contact />} />
