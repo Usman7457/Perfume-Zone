@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
+import { sendOrderConfirmationEmail } from './email.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
@@ -108,6 +109,11 @@ function formatProduct(row) {
     size: row.size || '100ml Eau De Parfum',
     collections: row.collections || '',
     notes,
+    sku: row.sku || ('PZ-' + String(row.id || 1).padStart(4, '0')),
+    stock_quantity:
+      row.stock_quantity !== undefined && row.stock_quantity !== null
+        ? Number(row.stock_quantity)
+        : (row.in_stock ? 15 : 0),
     in_stock:
       row.in_stock !== undefined && row.in_stock !== null
         ? Number(row.in_stock)
@@ -164,6 +170,14 @@ function formatOrder(row, lineItems = null) {
     total: Number(row.total || 0),
     shippingMethod: row.shipping_method || row.shippingMethod || 'standard',
     paymentMethod: row.payment_method || row.paymentMethod || 'card',
+    paymentPlatform:
+      row.payment_platform ||
+      row.paymentPlatform ||
+      (row.payment_method === 'googlepay' ? 'Google Pay (UK)' :
+       row.payment_method === 'paypal' ? 'PayPal Express' :
+       row.payment_method === 'klarna' ? 'Klarna (Pay in 3)' :
+       row.payment_method === 'cod' ? 'Cash on Delivery' : 'Stripe / Card Payment'),
+    currency: row.currency || 'GBP',
     orderNote: row.order_note || row.orderNote || null,
     trackingNumber: row.tracking_number || row.trackingNumber || '',
     courier: row.courier || 'Royal Mail Tracked',
@@ -694,12 +708,16 @@ async function initDatabaseTables() {
         total           NUMERIC(10, 2) NOT NULL CHECK (total >= 0),
         shipping_method VARCHAR(100) NOT NULL DEFAULT 'standard',
         payment_method  VARCHAR(50) NOT NULL DEFAULT 'card',
+        payment_platform VARCHAR(100) NOT NULL DEFAULT 'Stripe / Card Payment',
+        currency        VARCHAR(10) NOT NULL DEFAULT 'GBP',
         order_note      TEXT,
         status          VARCHAR(50) NOT NULL DEFAULT 'Confirmed',
         items           JSONB NOT NULL DEFAULT '[]'::jsonb,
         created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_platform VARCHAR(100) DEFAULT 'Stripe / Card Payment';
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS currency VARCHAR(10) DEFAULT 'GBP';
       CREATE INDEX IF NOT EXISTS idx_orders_email ON orders(LOWER(email));
       CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
       CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
@@ -1119,6 +1137,8 @@ app.post(
       total = 0,
       shippingMethod = 'standard',
       paymentMethod = 'card',
+      paymentPlatform = null,
+      currency = 'GBP',
       orderNote = null,
       trackingNumber = '',
       courier = 'Royal Mail Tracked',
@@ -1172,6 +1192,13 @@ app.post(
       couponCode: couponCode || null,
       total: Number(total || 0),
       paymentMethod: paymentMethod || 'card',
+      paymentPlatform:
+        paymentPlatform ||
+        (paymentMethod === 'googlepay' ? 'Google Pay (UK)' :
+         paymentMethod === 'paypal' ? 'PayPal Express' :
+         paymentMethod === 'klarna' ? 'Klarna (Pay in 3)' :
+         paymentMethod === 'cod' ? 'Cash on Delivery' : 'Stripe / Card Payment'),
+      currency: currency || 'GBP',
       orderNote: orderNote || null,
       trackingNumber: trackingNumber || '',
       courier: courier || 'Royal Mail Tracked',
@@ -1232,8 +1259,8 @@ app.post(
           `INSERT INTO orders (
              id, user_id, email, customer_name, phone, address, apartment,
              city, postcode, country, subtotal, shipping_cost, discount,
-             coupon_code, total, shipping_method, payment_method, order_note, status, items
-           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20::jsonb)
+             coupon_code, total, shipping_method, payment_method, payment_platform, currency, order_note, status, items
+           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22::jsonb)
            RETURNING *`,
           [
             id,
@@ -1253,6 +1280,8 @@ app.post(
             Number(total || 0),
             shippingMethod || 'standard',
             paymentMethod || 'card',
+            normalizedOrder.paymentPlatform,
+            normalizedOrder.currency,
             orderNote || null,
             status,
             JSON.stringify(cleanItems)
@@ -1301,6 +1330,10 @@ app.post(
         }
 
         await client.query('COMMIT');
+        // Dispatch order confirmation email notification to store owner (usman.nxg@gmail.com) and customer
+        sendOrderConfirmationEmail(normalizedOrder).catch((err) => {
+          console.warn('[Order Email Error]', err.message);
+        });
         return res.status(201).json({
           ok: true,
           id,
@@ -1316,6 +1349,11 @@ app.post(
         client.release();
       }
     }
+
+    // Dispatch order confirmation email notification to store owner (usman.nxg@gmail.com) and customer
+    sendOrderConfirmationEmail(normalizedOrder).catch((err) => {
+      console.warn('[Order Email Error]', err.message);
+    });
 
     res.status(201).json({
       ok: true,

@@ -47,6 +47,8 @@ CREATE TABLE IF NOT EXISTS products (
   size             VARCHAR(100) DEFAULT '100ml Eau De Parfum',
   collections      TEXT,
   notes            JSONB NOT NULL DEFAULT '{}'::jsonb,
+  sku              VARCHAR(100),
+  stock_quantity   INTEGER NOT NULL DEFAULT 15 CHECK (stock_quantity >= 0),
   in_stock         SMALLINT NOT NULL DEFAULT 1 CHECK (in_stock IN (0, 1)),
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -121,6 +123,8 @@ CREATE TABLE IF NOT EXISTS orders (
   total           NUMERIC(10, 2) NOT NULL CHECK (total >= 0),
   shipping_method VARCHAR(100) NOT NULL DEFAULT 'standard',
   payment_method  VARCHAR(50) NOT NULL DEFAULT 'card',
+  payment_platform VARCHAR(100) NOT NULL DEFAULT 'Stripe / Card Payment',
+  currency        VARCHAR(10) NOT NULL DEFAULT 'GBP',
   order_note      TEXT,
   status          VARCHAR(50) NOT NULL DEFAULT 'Confirmed',
   items           JSONB NOT NULL DEFAULT '[]'::jsonb,

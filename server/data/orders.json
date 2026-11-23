@@ -1,5 +1,48 @@
 [
   {
+    "id": "PZ-480369",
+    "userId": 3,
+    "email": "usmanghani0057457@gmail.com",
+    "customerName": "Perfume Zone Admin",
+    "shippingAddress": {
+      "firstName": "Perfume",
+      "lastName": "Zone Admin",
+      "address": "48 Mayfair Luxury Lane",
+      "apartment": "Suite 4",
+      "city": "London",
+      "postcode": "W1K 2PB",
+      "country": "United Kingdom",
+      "phone": "+44 20 7946 0991"
+    },
+    "items": [
+      {
+        "id": 16,
+        "handle": "afnan-supremacy-deodorant",
+        "title": "Afnan Supremacy Silver Perfumed Deodorant Spray",
+        "brand": "Afnan",
+        "size": "200ml Luxury Deodorant Body Spray",
+        "price": 14,
+        "qty": 1,
+        "image": "https://images.unsplash.com/photo-1563178406-4cdc2923acbc?auto=format&fit=crop&w=800&q=80"
+      }
+    ],
+    "shippingMethod": "standard",
+    "shippingCost": 3.99,
+    "subtotal": 14,
+    "discount": 0,
+    "couponCode": null,
+    "total": 17.990000000000002,
+    "paymentMethod": "cod",
+    "paymentPlatform": "Cash on Delivery (UK Mainland)",
+    "currency": "GBP",
+    "orderNote": null,
+    "trackingNumber": "",
+    "courier": "Royal Mail Tracked",
+    "adminNote": "",
+    "status": "Confirmed",
+    "createdAt": "2026-11-23T21:04:26.062Z"
+  },
+  {
     "id": "PZ-100001",
     "userId": 2,
     "email": "demo@perfumezone.uk",
@@ -50,4 +93,3 @@
     "createdAt": "2026-11-10T10:30:00.000Z"
   }
 ]
-

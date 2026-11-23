@@ -33,13 +33,12 @@
     "email": "sarah@perfumezone.uk",
     "password": "Sarah@123",
     "role": "customer",
-    "phone": "+44 7700 900456",
-    "address": "22 King Street",
-    "apartment": "",
-    "city": "Manchester",
-    "postcode": "M2 6AG",
+    "phone": "+44 20 7946 0991",
+    "address": "48 Mayfair Luxury Lane",
+    "apartment": "Suite 4",
+    "city": "London",
+    "postcode": "W1K 2PB",
     "country": "United Kingdom",
     "joinedDate": "Mar 2026"
   }
 ]
-
