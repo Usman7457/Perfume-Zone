@@ -216,7 +216,7 @@ export default function Cart() {
               <span>
                 {subtotal >= freeShippingThreshold || coupon?.type === 'free_shipping'
                   ? <strong className="free-text">FREE</strong>
-                  : '£3.99'}
+                  : money(3.99)}
               </span>
             </div>
 

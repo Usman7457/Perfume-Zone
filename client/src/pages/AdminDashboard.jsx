@@ -29,6 +29,8 @@ const EMPTY_PRODUCT_FORM = {
   brand: '',
   price: '',
   compare_at_price: '',
+  sku: '',
+  stock_quantity: '15',
   size: '100ml Eau de Parfum',
   collectionsText: 'all, new-in',
   image_url: '',
@@ -247,7 +249,9 @@ export default function AdminDashboard() {
       topNotes: Array.isArray(p.notes?.top) ? p.notes.top.join(', ') : '',
       middleNotes: Array.isArray(p.notes?.middle) ? p.notes.middle.join(', ') : '',
       baseNotes: Array.isArray(p.notes?.base) ? p.notes.base.join(', ') : '',
-      in_stock: p.in_stock !== false
+      in_stock: p.in_stock !== false,
+      sku: p.sku || ('PZ-' + String(p.id || 1).padStart(4, '0')),
+      stock_quantity: p.stock_quantity != null ? String(p.stock_quantity) : '15'
     });
   };
 
@@ -280,7 +284,9 @@ export default function AdminDashboard() {
         middle: parseNotes(prodForm.middleNotes),
         base: parseNotes(prodForm.baseNotes)
       },
-      in_stock: Boolean(prodForm.in_stock)
+      in_stock: Boolean(prodForm.in_stock),
+      sku: prodForm.sku.trim() || ('PZ-' + String(Date.now()).slice(-4)),
+      stock_quantity: prodForm.stock_quantity !== '' ? Math.max(0, parseInt(prodForm.stock_quantity, 10) || 0) : (prodForm.in_stock ? 15 : 0)
     });
     setEditingProduct(null);
     refreshAll();
@@ -780,6 +786,27 @@ export default function AdminDashboard() {
                     </div>
                     <div className="form-row-2">
                       <div className="form-group">
+                        <label>SKU (Stock Keeping Unit)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. PZ-1001-OUD"
+                          value={prodForm.sku}
+                          onChange={(e) => setProdForm({ ...prodForm, sku: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Stock Quantity (Units)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="e.g. 15"
+                          value={prodForm.stock_quantity}
+                          onChange={(e) => setProdForm({ ...prodForm, stock_quantity: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="form-row-2">
+                      <div className="form-group">
                         <label>Primary Image URL</label>
                         <input
                           type="url"
@@ -865,57 +892,66 @@ export default function AdminDashboard() {
                       <tr>
                         <th>Product</th>
                         <th>Brand</th>
+                        <th>SKU</th>
                         <th>Price</th>
-                        <th>Stock</th>
+                        <th>Stock / Qty</th>
                         <th className="th-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredProducts.slice(0, 60).map((p) => (
-                        <tr key={p.handle}>
-                          <td data-label="Product">
-                            <div className="table-product-cell">
-                              {p.image_url ? (
-                                <img src={p.image_url} alt={p.title} className="table-thumb" />
-                              ) : (
-                                <div className="table-thumb ph" />
-                              )}
-                              <div>
-                                <div className="table-primary-text">{p.title}</div>
-                                <div className="muted small">{p.size || '100ml'}</div>
+                      {filteredProducts.slice(0, 60).map((p) => {
+                        const inStock = p.in_stock !== false && p.in_stock !== 0;
+                        const qty = p.stock_quantity != null ? p.stock_quantity : (inStock ? 15 : 0);
+                        const sku = p.sku || ('PZ-' + String(p.id || 1).padStart(4, '0'));
+                        return (
+                          <tr key={p.handle}>
+                            <td data-label="Product">
+                              <div className="table-product-cell">
+                                {p.image_url ? (
+                                  <img src={p.image_url} alt={p.title} className="table-thumb" />
+                                ) : (
+                                  <div className="table-thumb ph" />
+                                )}
+                                <div>
+                                  <div className="table-primary-text">{p.title}</div>
+                                  <div className="muted small">{p.size || '100ml'}</div>
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td data-label="Brand">{p.brand}</td>
-                          <td data-label="Price">
-                            <strong>{money(p.price)}</strong>
-                            {p.compare_at_price && (
-                              <span className="muted small" style={{ textDecoration: 'line-through', marginLeft: 6 }}>
-                                {money(p.compare_at_price)}
+                            </td>
+                            <td data-label="Brand">{p.brand}</td>
+                            <td data-label="SKU">
+                              <span className="sku-badge">{sku}</span>
+                            </td>
+                            <td data-label="Price">
+                              <strong>{money(p.price)}</strong>
+                              {p.compare_at_price && (
+                                <span className="muted small" style={{ textDecoration: 'line-through', marginLeft: 6 }}>
+                                  {money(p.compare_at_price)}
+                                </span>
+                              )}
+                            </td>
+                            <td data-label="Stock">
+                              <span className={'status-badge ' + (inStock && qty > 0 ? (qty <= 5 ? 'processing' : 'delivered') : 'cancelled')}>
+                                {inStock && qty > 0 ? `${qty} in stock` : 'Out of stock'}
                               </span>
-                            )}
-                          </td>
-                          <td data-label="Stock">
-                            <span className={'status-badge ' + (p.in_stock !== false ? 'delivered' : 'cancelled')}>
-                              {p.in_stock !== false ? 'In Stock' : 'Out of Stock'}
-                            </span>
-                          </td>
-                          <td className="td-right" data-label="Actions">
-                            <div className="table-actions">
-                              <button type="button" className="btn ghost btn-sm" onClick={() => openEditProduct(p)}>
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                className="btn ghost danger-btn btn-sm"
-                                onClick={() => handleDeleteProduct(p.handle, p.title)}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td className="td-right" data-label="Actions">
+                              <div className="table-actions">
+                                <button type="button" className="btn ghost btn-sm" onClick={() => openEditProduct(p)}>
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn ghost danger-btn btn-sm"
+                                  onClick={() => handleDeleteProduct(p.handle, p.title)}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                   {filteredProducts.length > 60 && (
@@ -946,7 +982,7 @@ export default function AdminDashboard() {
                       <div>
                         <h3>Manage Order {selectedOrder.id}</h3>
                         <p className="muted small" style={{ margin: 0 }}>
-                          {selectedOrder.customerName} ({selectedOrder.email}) • {money(selectedOrder.total)}
+                          {selectedOrder.customerName} ({selectedOrder.email}) • {money(selectedOrder.total)} • <strong>Platform:</strong> {selectedOrder.paymentPlatform || selectedOrder.paymentMethod || 'Stripe / Card'}
                         </p>
                       </div>
                       <button type="button" className="link-inline-btn" onClick={() => setSelectedOrder(null)}>
@@ -1025,6 +1061,7 @@ export default function AdminDashboard() {
                       <tr>
                         <th>Order</th>
                         <th>Customer</th>
+                        <th>Payment</th>
                         <th>Date</th>
                         <th>Total</th>
                         <th>Status</th>
@@ -1039,6 +1076,28 @@ export default function AdminDashboard() {
                           <td data-label="Customer">
                             <div className="table-primary-text">{o.customerName}</div>
                             <span className="muted small">{o.email}</span>
+                          </td>
+                          <td data-label="Payment">
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                fontSize: '11px',
+                                fontWeight: '600',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                background: '#f1f5f9',
+                                color: '#1e293b',
+                                border: '1px solid #e2e8f0',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {o.paymentPlatform || (
+                                o.paymentMethod === 'googlepay' ? 'Google Pay' :
+                                o.paymentMethod === 'paypal' ? 'PayPal' :
+                                o.paymentMethod === 'klarna' ? 'Klarna' :
+                                o.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Stripe / Card'
+                              )}
+                            </span>
                           </td>
                           <td data-label="Date">{new Date(o.createdAt).toLocaleDateString('en-GB')}</td>
                           <td data-label="Total"><strong>{money(o.total)}</strong></td>

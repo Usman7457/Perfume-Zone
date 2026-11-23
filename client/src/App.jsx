@@ -5,6 +5,7 @@ import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import CartDrawer from './components/CartDrawer.jsx';
 import CookieBanner from './components/CookieBanner.jsx';
+import { useCurrency } from './components/CurrencyContext.jsx';
 
 // Keep Home eager for fastest LCP/FCP; code-split secondary routes
 import Home from './pages/Home.jsx';
@@ -30,6 +31,7 @@ const Stores = lazy(() => import('./pages/Stores.jsx'));
 
 export default function App() {
   const { pathname } = useLocation();
+  const { currency } = useCurrency();
 
   useEffect(() => {
     window.scrollTo(0, 0);

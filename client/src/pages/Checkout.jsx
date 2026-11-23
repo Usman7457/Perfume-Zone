@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../components/CartContext.jsx';
 import { useAuth } from '../components/AuthContext.jsx';
 import { money, createOrder } from '../api.js';
+import { useCurrency } from '../components/CurrencyContext.jsx';
 import { LockIcon, ShieldIcon, TruckIcon, CheckIcon } from '../components/Icons.jsx';
 
 export default function Checkout() {
@@ -17,6 +18,7 @@ export default function Checkout() {
     freeShippingThreshold
   } = useCart();
   const { user, login, register, updateProfile, logout } = useAuth();
+  const { currency } = useCurrency();
   const nav = useNavigate();
 
   // Checkout Auth Gate state
@@ -97,6 +99,25 @@ export default function Checkout() {
   const [cardCvc, setCardCvc] = useState('');
   const [cardName, setCardName] = useState('');
 
+  const handleCardNumberChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 16);
+    const formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ');
+    setCardNumber(formatted);
+  };
+
+  const handleCardExpiryChange = (e) => {
+    let raw = e.target.value.replace(/\D/g, '').slice(0, 4);
+    if (raw.length >= 2) {
+      raw = raw.slice(0, 2) + '/' + raw.slice(2);
+    }
+    setCardExpiry(raw);
+  };
+
+  const handleCardCvcChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 4);
+    setCardCvc(raw);
+  };
+
   // Promo code
   const [promoCode, setPromoCode] = useState('');
   const [promoMsg, setPromoMsg] = useState(null);
@@ -147,6 +168,14 @@ export default function Checkout() {
     setSubmitting(true);
 
     try {
+      const paymentPlatformMap = {
+        card: 'Stripe (Credit / Debit Card)',
+        googlepay: 'Google Pay (UK)',
+        paypal: 'PayPal Express',
+        klarna: 'Klarna (Pay in 3)',
+        cod: 'Cash on Delivery (UK Mainland)'
+      };
+
       const orderPayload = {
         email: email || user.email,
         customerName: `${firstName} ${lastName}`.trim() || user.name,
@@ -178,6 +207,8 @@ export default function Checkout() {
         couponCode: coupon?.code || null,
         total: finalTotal,
         paymentMethod,
+        paymentPlatform: paymentPlatformMap[paymentMethod] || 'Stripe / Card Payment',
+        currency: currency?.code || 'GBP',
         newsletter
       };
 
@@ -553,7 +584,7 @@ export default function Checkout() {
                     <span className="muted">Standard tracked delivery across the UK</span>
                   </div>
                   <strong className="shipping-radio-price">
-                    {isFreeStandard ? <span className="free-tag">FREE</span> : '£3.99'}
+                    {isFreeStandard ? <span className="free-tag">FREE</span> : money(3.99)}
                   </strong>
                 </label>
 
@@ -568,7 +599,7 @@ export default function Checkout() {
                     <strong>Royal Mail Tracked 24 (Next Working Day)</strong>
                     <span className="muted">Priority dispatch and expedited delivery</span>
                   </div>
-                  <strong className="shipping-radio-price">£5.99</strong>
+                  <strong className="shipping-radio-price">{money(5.99)}</strong>
                 </label>
 
                 <label className={'shipping-radio-box' + (shippingMethod === 'saturday' ? ' selected' : '')}>
@@ -582,17 +613,178 @@ export default function Checkout() {
                     <strong>Guaranteed Saturday Premium Delivery</strong>
                     <span className="muted">Arrives on Saturday morning before 1pm</span>
                   </div>
-                  <strong className="shipping-radio-price">£9.99</strong>
+                  <strong className="shipping-radio-price">{money(9.99)}</strong>
                 </label>
               </div>
             </section>
 
             {/* Step 4: Payment */}
-            <section className="checkout-section">
+            <section id="checkout-payment-section" className="checkout-section">
               <h3>4. Payment</h3>
-              <p className="muted">All transactions are secure and encrypted.</p>
+              <p className="muted">All transactions are secure and encrypted. Select your preferred UK payment method:</p>
+
+              {/* Express Wallets Bar */}
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '16px',
+                marginBottom: '18px'
+              }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#64748b',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.8px',
+                  marginBottom: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <LockIcon style={{ width: 14, height: 14 }} /> Express Checkout
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('googlepay')}
+                    style={{
+                      background: '#000000',
+                      color: '#ffffff',
+                      border: '1px solid #000000',
+                      borderRadius: '6px',
+                      padding: '10px 14px',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      outline: paymentMethod === 'googlepay' ? '2px solid #2563eb' : 'none',
+                      transition: 'transform 0.15s ease'
+                    }}
+                  >
+                    <span style={{ fontWeight: 800, letterSpacing: '0.5px' }}>G</span>Pay
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('paypal')}
+                    style={{
+                      background: '#ffc439',
+                      color: '#003087',
+                      border: '1px solid #ffc439',
+                      borderRadius: '6px',
+                      padding: '10px 14px',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      outline: paymentMethod === 'paypal' ? '2px solid #2563eb' : 'none',
+                      transition: 'transform 0.15s ease'
+                    }}
+                  >
+                    <span style={{ fontStyle: 'italic', fontWeight: 800 }}>PayPal</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('klarna')}
+                    style={{
+                      background: '#ffb3c7',
+                      color: '#0a0a0a',
+                      border: '1px solid #ffb3c7',
+                      borderRadius: '6px',
+                      padding: '10px 14px',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      outline: paymentMethod === 'klarna' ? '2px solid #2563eb' : 'none',
+                      transition: 'transform 0.15s ease'
+                    }}
+                  >
+                    Klarna.
+                  </button>
+                </div>
+              </div>
 
               <div className="payment-accordion">
+                {/* Google Pay Option */}
+                <div className={'payment-tab' + (paymentMethod === 'googlepay' ? ' active' : '')}>
+                  <label className="payment-tab-header">
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={paymentMethod === 'googlepay'}
+                      onChange={() => setPaymentMethod('googlepay')}
+                    />
+                    <strong>Google Pay (UK)</strong>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      background: '#000000',
+                      color: '#ffffff',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.3px',
+                      marginLeft: 'auto'
+                    }}>
+                      GPay
+                    </span>
+                  </label>
+
+                  {paymentMethod === 'googlepay' && (
+                    <div className="payment-tab-body">
+                      <div style={{
+                        background: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        padding: '14px',
+                        marginBottom: '12px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '13px', color: '#475569', fontWeight: 600 }}>Connected Google Wallet</span>
+                          <span style={{ fontSize: '11px', background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>✓ Verified &amp; Ready</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{
+                            width: 38,
+                            height: 24,
+                            background: '#1e293b',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#ffffff',
+                            fontSize: '10px',
+                            fontWeight: 800,
+                            letterSpacing: '0.5px'
+                          }}>
+                            VISA
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Google Pay • Visa •••• 4242</span>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>Fast 1-touch checkout • Encrypted token</div>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="muted" style={{ fontSize: '13px', margin: 0 }}>
+                        Click &ldquo;Pay &amp; Complete Order&rdquo; below to confirm with your Google Pay biometric / device authentication.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Credit Card Option */}
                 <div className={'payment-tab' + (paymentMethod === 'card' ? ' active' : '')}>
                   <label className="payment-tab-header">
@@ -602,41 +794,41 @@ export default function Checkout() {
                       checked={paymentMethod === 'card'}
                       onChange={() => setPaymentMethod('card')}
                     />
-                    <strong>Credit / Debit Card</strong>
-                    <span className="cards-accepted">Visa • MC • Amex</span>
+                    <strong>Credit / Debit Card (Stripe Gateway)</strong>
+                    <span className="cards-accepted">Visa • MC • Amex • Maestro</span>
                   </label>
 
                   {paymentMethod === 'card' && (
                     <div className="payment-tab-body">
                       <div className="form-group">
-                        <label>Card Number</label>
+                        <label>Card Number *</label>
                         <input
                           type="text"
                           maxLength="19"
-                          placeholder="1234 5678 9012 3456"
+                          placeholder="4242 4242 4242 4242"
                           value={cardNumber}
-                          onChange={(e) => setCardNumber(e.target.value)}
+                          onChange={handleCardNumberChange}
                         />
                       </div>
                       <div className="form-row two-cols">
                         <div className="form-group">
-                          <label>Expiration Date</label>
+                          <label>Expiration Date *</label>
                           <input
                             type="text"
                             maxLength="5"
                             placeholder="MM/YY"
                             value={cardExpiry}
-                            onChange={(e) => setCardExpiry(e.target.value)}
+                            onChange={handleCardExpiryChange}
                           />
                         </div>
                         <div className="form-group">
-                          <label>Security Code (CVV)</label>
+                          <label>Security Code (CVV) *</label>
                           <input
                             type="password"
                             maxLength="4"
                             placeholder="CVC"
                             value={cardCvc}
-                            onChange={(e) => setCardCvc(e.target.value)}
+                            onChange={handleCardCvcChange}
                           />
                         </div>
                       </div>
@@ -649,6 +841,9 @@ export default function Checkout() {
                           onChange={(e) => setCardName(e.target.value)}
                         />
                       </div>
+                      <p className="muted" style={{ fontSize: '12px', margin: '8px 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <LockIcon style={{ width: 12, height: 12 }} /> 256-bit TLS encrypted transaction processed securely via Stripe.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -662,13 +857,26 @@ export default function Checkout() {
                       checked={paymentMethod === 'paypal'}
                       onChange={() => setPaymentMethod('paypal')}
                     />
-                    <strong>PayPal</strong>
-                    <span className="paypal-tag">Pay with PayPal balance or card</span>
+                    <strong>PayPal Express</strong>
+                    <span className="paypal-tag" style={{ marginLeft: 'auto' }}>Pay with PayPal or Card</span>
                   </label>
                   {paymentMethod === 'paypal' && (
                     <div className="payment-tab-body">
-                      <p className="muted">
-                        After clicking “Complete Order”, you will be redirected to PayPal to complete your purchase securely.
+                      <div style={{
+                        background: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        padding: '14px',
+                        marginBottom: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}>
+                        <span style={{ fontSize: '13px', color: '#1e3a8a', fontWeight: 600 }}>PayPal Account Balance &amp; Linked Cards</span>
+                        <span style={{ fontSize: '11px', background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>PayPal UK Ready</span>
+                      </div>
+                      <p className="muted" style={{ fontSize: '13px', margin: 0 }}>
+                        Pay safely using your PayPal balance, bank account, or credit/debit card with full PayPal Buyer Protection.
                       </p>
                     </div>
                   )}
@@ -684,12 +892,37 @@ export default function Checkout() {
                       onChange={() => setPaymentMethod('klarna')}
                     />
                     <strong>Klarna (Pay in 3)</strong>
-                    <span className="klarna-tag">3 payments of {money(finalTotal / 3)}</span>
+                    <span className="klarna-tag" style={{ marginLeft: 'auto' }}>3 payments of {money(finalTotal / 3)}</span>
                   </label>
                   {paymentMethod === 'klarna' && (
                     <div className="payment-tab-body">
-                      <p className="muted">
-                        Split your purchase into 3 interest-free monthly payments. No hidden fees.
+                      <div style={{
+                        background: '#fdf2f8',
+                        border: '1px solid #fbcfe8',
+                        borderRadius: '6px',
+                        padding: '14px',
+                        marginBottom: '12px'
+                      }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#831843', marginBottom: '8px' }}>
+                          Klarna Pay in 3 Installment Plan:
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center' }}>
+                          <div style={{ background: '#ffffff', padding: '8px', borderRadius: '4px', border: '1px solid #fce7f3' }}>
+                            <div style={{ fontSize: '11px', color: '#6b7280' }}>Today</div>
+                            <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{money(finalTotal / 3)}</div>
+                          </div>
+                          <div style={{ background: '#ffffff', padding: '8px', borderRadius: '4px', border: '1px solid #fce7f3' }}>
+                            <div style={{ fontSize: '11px', color: '#6b7280' }}>In 30 Days</div>
+                            <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{money(finalTotal / 3)}</div>
+                          </div>
+                          <div style={{ background: '#ffffff', padding: '8px', borderRadius: '4px', border: '1px solid #fce7f3' }}>
+                            <div style={{ fontSize: '11px', color: '#6b7280' }}>In 60 Days</div>
+                            <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{money(finalTotal / 3)}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="muted" style={{ fontSize: '13px', margin: 0 }}>
+                        Split your purchase into 3 interest-free monthly payments. No interest, no extra fees when paid on time.
                       </p>
                     </div>
                   )}
@@ -708,7 +941,7 @@ export default function Checkout() {
                   </label>
                   {paymentMethod === 'cod' && (
                     <div className="payment-tab-body">
-                      <p className="muted">
+                      <p className="muted" style={{ margin: 0 }}>
                         Pay upon delivery directly to the courier. Please prepare the exact cash amount ({money(finalTotal)}).
                       </p>
                     </div>

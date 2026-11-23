@@ -139,12 +139,15 @@ export default function OrderConfirmation() {
             {shippingAddress?.phone && <span>Phone: {shippingAddress.phone}</span>}
           </p>
 
-          <h4>Payment Method</h4>
+          <h4>Payment Method &amp; Platform</h4>
           <p className="payment-type-text">
-            {paymentMethod === 'card' && 'Credit / Debit Card (Secure Payment)'}
-            {paymentMethod === 'paypal' && 'PayPal Account'}
-            {paymentMethod === 'klarna' && 'Klarna (3 Installments)'}
-            {paymentMethod === 'cod' && 'Cash on Delivery'}
+            {order.paymentPlatform || (
+              paymentMethod === 'googlepay' ? 'Google Pay (UK)' :
+              paymentMethod === 'card' ? 'Credit / Debit Card (Stripe Gateway)' :
+              paymentMethod === 'paypal' ? 'PayPal Express' :
+              paymentMethod === 'klarna' ? 'Klarna (Pay in 3)' :
+              paymentMethod === 'cod' ? 'Cash on Delivery' : 'Secure Online Payment'
+            )}
           </p>
         </div>
       </div>

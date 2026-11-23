@@ -76,7 +76,7 @@ export default function Header() {
           )}
           <Link
             to="/wishlist"
-            className={'icon-btn' + (location.pathname === '/wishlist' ? ' active' : '')}
+            className={'icon-btn desktop-only' + (location.pathname === '/wishlist' ? ' active' : '')}
             aria-label="Wishlist"
             title="Wishlist"
             onClick={closeAll}
@@ -98,7 +98,7 @@ export default function Header() {
             {user && <span className="auth-dot" aria-hidden="true" />}
           </Link>
           <button
-            className={'icon-btn' + (searching ? ' active' : '')}
+            className={'icon-btn desktop-only' + (searching ? ' active' : '')}
             aria-label="Search perfumes"
             title="Search"
             type="button"
@@ -260,29 +260,90 @@ export default function Header() {
               )}
             </li>
           ))}
-          <li>
+        </ul>
+
+        {/* Search & Utility Icons placed below navbar */}
+        <div className="drawer-extra-nav">
+          <form className="drawer-search-box" onSubmit={go}>
+            <input
+              type="search"
+              placeholder="Search perfumes, brands..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              aria-label="Search perfumes"
+            />
+            <button type="submit" aria-label="Search">
+              <SearchIcon />
+            </button>
+          </form>
+
+          <div className="drawer-icons-grid">
             <Link
               to="/wishlist"
+              className={'drawer-icon-link' + (location.pathname === '/wishlist' ? ' active' : '')}
               onClick={() => {
                 setDrawer(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
+              title="Wishlist"
             >
-              WISHLIST {wishlistCount > 0 ? `(${wishlistCount})` : ''}
+              <div className="drawer-icon-badge-wrap">
+                <HeartIcon />
+                {wishlistCount > 0 && <span className="badge">{wishlistCount}</span>}
+              </div>
+              <span>Wishlist</span>
             </Link>
-          </li>
-          <li>
+
+            <Link
+              to="/search"
+              className={'drawer-icon-link' + (location.pathname === '/search' ? ' active' : '')}
+              onClick={() => {
+                setDrawer(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              title="Search"
+            >
+              <div className="drawer-icon-badge-wrap">
+                <SearchIcon />
+              </div>
+              <span>Search</span>
+            </Link>
+
+            <Link
+              to={isAdmin ? '/admin' : '/account'}
+              className={
+                'drawer-icon-link' +
+                (location.pathname.startsWith('/account') || location.pathname.startsWith('/admin') ? ' active' : '')
+              }
+              onClick={() => {
+                setDrawer(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              title={isAdmin ? 'Admin Dashboard' : user ? 'My Account' : 'Sign In'}
+            >
+              <div className="drawer-icon-badge-wrap">
+                <UserIcon />
+                {user && <span className="auth-dot" aria-hidden="true" />}
+              </div>
+              <span>{isAdmin ? 'Admin' : user ? 'Account' : 'Sign In'}</span>
+            </Link>
+
             <Link
               to="/tools/locations"
+              className={'drawer-icon-link' + (location.pathname === '/tools/locations' ? ' active' : '')}
               onClick={() => {
                 setDrawer(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
+              title="Find a Store"
             >
-              FIND A STORE
+              <div className="drawer-icon-badge-wrap">
+                <PinIcon />
+              </div>
+              <span>Stores</span>
             </Link>
-          </li>
-        </ul>
+          </div>
+        </div>
         <Link
           to={isAdmin ? '/admin' : '/account'}
           className="drawer-login"

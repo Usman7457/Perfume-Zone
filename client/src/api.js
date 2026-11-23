@@ -275,7 +275,12 @@ export const saveProductAdmin = (product) => {
     size: String(product.size || '100ml Eau De Parfum').trim(),
     collections: String(product.collections || 'new-in|all').trim(),
     notes: product.notes || { top: '', middle: '', base: '' },
-    in_stock: product.in_stock === 0 || product.in_stock === false ? 0 : 1
+    in_stock: product.in_stock === 0 || product.in_stock === false ? 0 : 1,
+    sku: String(product.sku || '').trim() || ('PZ-' + String(product.id || cleanHandle).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8)),
+    stock_quantity:
+      product.stock_quantity !== '' && product.stock_quantity != null
+        ? Math.max(0, parseInt(product.stock_quantity, 10) || 0)
+        : (product.in_stock === 0 || product.in_stock === false ? 0 : 15)
   };
 
   saveImportedProducts([normalized], false);
@@ -775,4 +780,31 @@ export const resetSiteSettings = () => {
   return DEFAULT_SITE_SETTINGS;
 };
 
-export const money = (n) => '£' + Number(n || 0).toFixed(2);
+export const CURRENCIES = {
+  GBP: { code: 'GBP', symbol: '£', rate: 1.0, label: 'United Kingdom (GBP £)' },
+  EUR: { code: 'EUR', symbol: '€', rate: 1.17, label: 'Eurozone (EUR €)' },
+  USD: { code: 'USD', symbol: '$', rate: 1.28, label: 'United States (USD $)' }
+};
+
+export const getActiveCurrency = () => {
+  if (typeof window === 'undefined') return CURRENCIES.GBP;
+  try {
+    const raw = localStorage.getItem('perfumezone_country') || '';
+    if (raw.includes('EUR') || raw.includes('€')) return CURRENCIES.EUR;
+    if (raw.includes('USD') || raw.includes('$')) return CURRENCIES.USD;
+  } catch { }
+  return CURRENCIES.GBP;
+};
+
+export const convertPrice = (n, customCurrency = null) => {
+  const cur = customCurrency || getActiveCurrency();
+  const num = Number(n || 0);
+  return Number((num * (cur.rate || 1.0)).toFixed(2));
+};
+
+export const money = (n, customCurrency = null) => {
+  const cur = customCurrency || getActiveCurrency();
+  const num = Number(n || 0);
+  const converted = num * (cur.rate || 1.0);
+  return `${cur.symbol}${converted.toFixed(2)}`;
+};

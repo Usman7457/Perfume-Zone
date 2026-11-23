@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { getProduct, getProducts, money } from '../api.js';
+import { getProduct, getProducts, money, COLLECTION_META } from '../api.js';
 import { useCart } from '../components/CartContext.jsx';
 import { useWishlist } from '../components/WishlistContext.jsx';
 import { HeartIcon, BagIcon, ShieldIcon, TruckIcon, LockIcon } from '../components/Icons.jsx';
@@ -68,6 +68,20 @@ export default function Product() {
 
   const isWish = isInWishlist(p.id);
   const imgs = [p.image_url, p.image_url_2].filter(Boolean);
+
+  const inStock = p.in_stock !== 0 && p.in_stock !== false;
+  const stockQty = p.stock_quantity != null ? Number(p.stock_quantity) : (inStock ? 15 : 0);
+  const isLowStock = inStock && stockQty > 0 && stockQty <= 5;
+  const isOutOfStock = !inStock || stockQty === 0;
+  const sku = p.sku || ('PZ-' + String(p.id || 1).padStart(4, '0') + (p.brand ? '-' + p.brand.slice(0, 3).toUpperCase() : ''));
+  const categoriesList = (p.collections || '')
+    .split('|')
+    .map((c) => c.trim())
+    .filter(Boolean)
+    .map((handle) => ({
+      handle,
+      title: COLLECTION_META[handle]?.title || handle.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    }));
 
   const handleBuyNow = () => {
     add(p, qty);
@@ -141,26 +155,34 @@ export default function Product() {
             <strong className="size-value">{p.size || '100ml Eau De Parfum'}</strong>
           </div>
 
-          <div className="stock-status-row">
+          <div className={`stock-status-row ${isOutOfStock ? 'out-of-stock' : isLowStock ? 'low-stock' : 'in-stock'}`}>
             <span className="stock-dot" />
-            <span>In Stock — Dispatched within 24 hours from London</span>
+            {isOutOfStock ? (
+              <span>Out of Stock — Currently sold out</span>
+            ) : isLowStock ? (
+              <span>Low Stock — Only <strong>{stockQty}</strong> left in stock (order soon)</span>
+            ) : (
+              <span>In Stock (<strong>{stockQty}</strong> units available) — Dispatched within 24 hours from London</span>
+            )}
           </div>
 
-          {/* Quantity and Action Buttons */}
+          {/* Quantity and Action Buttons - All in 1 Row */}
           <div className="buy pdp-actions-group">
             <div className="qty">
               <button
                 type="button"
                 aria-label="Decrease quantity"
+                disabled={isOutOfStock}
                 onClick={() => setQty(Math.max(1, qty - 1))}
               >
                 −
               </button>
-              <span>{qty}</span>
+              <span>{isOutOfStock ? 0 : qty}</span>
               <button
                 type="button"
                 aria-label="Increase quantity"
-                onClick={() => setQty(qty + 1)}
+                disabled={isOutOfStock || (stockQty > 0 && qty >= stockQty)}
+                onClick={() => setQty(stockQty > 0 ? Math.min(stockQty, qty + 1) : qty + 1)}
               >
                 +
               </button>
@@ -168,50 +190,91 @@ export default function Product() {
 
             <button
               type="button"
-              className="btn wide pdp-add-btn"
-              disabled={!p.in_stock}
+              className="btn pdp-add-btn"
+              disabled={isOutOfStock}
               onClick={() => add(p, qty)}
             >
-              <BagIcon /> {p.in_stock ? 'Add to Shopping Bag' : 'Sold Out'}
+              <BagIcon /> {!isOutOfStock ? 'Add to Bag' : 'Sold Out'}
             </button>
+
+            {!isOutOfStock && (
+              <button
+                type="button"
+                className="btn pdp-buy-now-btn"
+                onClick={handleBuyNow}
+              >
+                Instant Buy
+              </button>
+            )}
 
             <button
               type="button"
               className={'pdp-wishlist-toggle-btn' + (isWish ? ' active' : '')}
               aria-label={isWish ? 'Remove from Wishlist' : 'Add to Wishlist'}
+              title={isWish ? 'Saved in Wishlist' : 'Add to Wishlist'}
               onClick={() => toggleWishlist(p)}
             >
               <HeartIcon filled={isWish} />
             </button>
           </div>
 
-          {/* Instant Buy Now Button */}
-          {p.in_stock !== 0 && (
-            <button
-              type="button"
-              className="btn light wide pdp-buy-now-btn"
-              onClick={handleBuyNow}
-            >
-              Instant Buy Now (Fast Checkout)
-            </button>
-          )}
-
           {/* Trust Highlights */}
           <div className="pdp-trust-grid">
             <div className="trust-pill">
-              <TruckIcon /> Free UK Delivery over £50
+              <TruckIcon />
+              <span>Free UK Delivery over £50</span>
             </div>
             <div className="trust-pill">
-              <ShieldIcon /> 100% Guaranteed Authentic
+              <ShieldIcon />
+              <span>100% Guaranteed Authentic</span>
             </div>
             <div className="trust-pill">
-              <LockIcon /> Secure Payment Gateway
+              <LockIcon />
+              <span>Secure Payment Gateway</span>
             </div>
           </div>
 
-          {/* Details Accordion */}
+          {/* WordPress / WooCommerce Style Product Meta */}
+          <div className="product-meta">
+            <div className="product-meta-item">
+              <span className="product-meta-label">SKU:</span>
+              <span className="product-meta-value sku-badge">{sku}</span>
+            </div>
+            <div className="product-meta-item">
+              <span className="product-meta-label">Availability:</span>
+              <span className={`product-meta-value stock-pill ${isOutOfStock ? 'out-of-stock' : isLowStock ? 'low-stock' : 'in-stock'}`}>
+                <span className="stock-dot" />
+                {isOutOfStock ? 'Out of stock' : isLowStock ? `Low stock (${stockQty} units)` : `In stock (${stockQty} units)`}
+              </span>
+            </div>
+            {p.brand && (
+              <div className="product-meta-item">
+                <span className="product-meta-label">Brand:</span>
+                <span className="product-meta-value product-meta-links">
+                  <Link to={'/collections/' + p.brand.toLowerCase().replace(/\s+/g, '-')}>
+                    {p.brand}
+                  </Link>
+                </span>
+              </div>
+            )}
+            {categoriesList.length > 0 && (
+              <div className="product-meta-item">
+                <span className="product-meta-label">Categories:</span>
+                <span className="product-meta-value product-meta-links">
+                  {categoriesList.map((cat, idx) => (
+                    <span key={cat.handle}>
+                      <Link to={'/collections/' + cat.handle}>{cat.title}</Link>
+                      {idx < categoriesList.length - 1 ? ', ' : ''}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Details Accordion (Closed by default - opens on user click) */}
           <div className="pdp-details-list">
-            <details open>
+            <details>
               <summary>Fragrance Description</summary>
               <div className="details-content">
                 <p>{p.description}</p>
@@ -219,7 +282,7 @@ export default function Product() {
             </details>
 
             {p.notes && (
-              <details open>
+              <details>
                 <summary>Olfactory Pyramid &amp; Notes</summary>
                 <div className="details-content olfactory-pyramid">
                   <div className="note-tier">

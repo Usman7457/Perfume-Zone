@@ -58,7 +58,7 @@ function Hero() {
 
   return (
     <section className="hero" aria-roledescription="carousel">
-      <Link to={s.to} className="hero-slide">
+      <div className="hero-slide">
         <img
           src={s.bg}
           alt={s.title}
@@ -74,9 +74,11 @@ function Hero() {
           <span className="hero-eyebrow">PERFUME ZONE UK</span>
           <h1>{s.title}</h1>
           <p className="hero-subtitle">{s.subtitle}</p>
-          <span className="btn light hero-cta-btn">{s.cta}</span>
+          <Link to={s.to} className="btn light hero-cta-btn">
+            {s.cta}
+          </Link>
         </div>
-      </Link>
+      </div>
       <div className="hero-ctl">
         <button
           type="button"

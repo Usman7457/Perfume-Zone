@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { COUNTRIES } from '../data/nav.js';
+import { useCurrency } from './CurrencyContext.jsx';
 
 const STORAGE_KEY = 'perfumezone_country';
 const DEFAULT_COUNTRY = 'United Kingdom (GBP £)';
@@ -10,6 +11,7 @@ const getCurrencyLabel = (label) => {
 };
 
 export default function CountrySelect({ className = '', dropUp = false }) {
+  const { changeCountry } = useCurrency();
   const [open, setOpen] = useState(false);
   const [cur, setCur] = useState(() => {
     try {
@@ -53,10 +55,14 @@ export default function CountrySelect({ className = '', dropUp = false }) {
   const handleSelect = (country) => {
     setCur(country);
     setOpen(false);
-    try {
-      localStorage.setItem(STORAGE_KEY, country);
-    } catch {}
-    window.dispatchEvent(new CustomEvent('pz:country-change', { detail: country }));
+    if (typeof changeCountry === 'function') {
+      changeCountry(country);
+    } else {
+      try {
+        localStorage.setItem(STORAGE_KEY, country);
+      } catch {}
+      window.dispatchEvent(new CustomEvent('pz:country-change', { detail: country }));
+    }
   };
 
   return (
