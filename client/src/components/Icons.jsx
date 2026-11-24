@@ -29,3 +29,9 @@ export const TruckIcon = (props) => (
 export const ShieldIcon = (props) => (
   <svg {...P} {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
 );
+export const TagIcon = (props) => (
+  <svg {...P} {...props}>
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+    <line x1="7" y1="7" x2="7.01" y2="7" />
+  </svg>
+);

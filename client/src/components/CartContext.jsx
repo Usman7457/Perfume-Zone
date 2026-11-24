@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { hasCartSaleItems } from '../api.js';
 
 const Ctx = createContext();
 export const useCart = () => useContext(Ctx);
@@ -35,6 +36,14 @@ export function CartProvider({ children }) {
     }
   }, [coupon]);
 
+  const hasSaleItems = hasCartSaleItems(items);
+
+  useEffect(() => {
+    if (hasSaleItems && coupon) {
+      setCoupon(null);
+    }
+  }, [hasSaleItems, coupon]);
+
   const add = (p, qty = 1) => {
     setItems((curr) => {
       const exists = curr.find((i) => i.id === p.id);
@@ -50,7 +59,11 @@ export function CartProvider({ children }) {
           brand: p.brand || 'Perfume Zone',
           size: p.size || '100ml',
           price: Number(p.price),
+          compare_at_price: p.compare_at_price ? Number(p.compare_at_price) : null,
           image: p.image_url || '',
+          is_on_sale: Boolean(p.is_on_sale || (p.compare_at_price && Number(p.compare_at_price) > Number(p.price))),
+          discount_label: p.discount_label || '',
+          collections: p.collections || '',
           qty
         }
       ];
@@ -89,6 +102,12 @@ export function CartProvider({ children }) {
   }
 
   const applyCoupon = (code) => {
+    if (hasSaleItems) {
+      return {
+        ok: false,
+        message: 'Promotional discount is already applied. Coupons cannot be stacked with sale items.'
+      };
+    }
     const clean = (code || '').trim().toUpperCase();
     if (clean === 'PERFUME10' || clean === 'WELCOME10') {
       const c = { code: clean, type: 'percent', value: 10, label: '10% Off' };
@@ -127,6 +146,7 @@ export function CartProvider({ children }) {
         shippingCost,
         discount,
         coupon,
+        hasSaleItems,
         applyCoupon,
         removeCoupon,
         open,

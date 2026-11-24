@@ -14,6 +14,7 @@ const DATA_DIR = path.join(__dirname, 'data');
 const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const SUBSCRIBERS_FILE = path.join(DATA_DIR, 'subscribers.json');
+const CMS_FILE = path.join(DATA_DIR, 'cms.json');
 
 function readJsonFile(filePath, fallback = []) {
   try {
@@ -21,6 +22,18 @@ function readJsonFile(filePath, fallback = []) {
     const raw = fs.readFileSync(filePath, 'utf8');
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : fallback;
+  } catch (err) {
+    console.warn(`Failed reading ${filePath}:`, err.message);
+    return fallback;
+  }
+}
+
+function readJsonObjectFile(filePath, fallback = {}) {
+  try {
+    if (!fs.existsSync(filePath)) return fallback;
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : fallback;
   } catch (err) {
     console.warn(`Failed reading ${filePath}:`, err.message);
     return fallback;
@@ -42,23 +55,23 @@ const useSsl = process.env.DB_SSL === 'true';
 
 const DB_CONFIG = process.env.DATABASE_URL
   ? {
-      connectionString: process.env.DATABASE_URL,
-      ssl: useSsl ? { rejectUnauthorized: false } : false,
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2500
-    }
+    connectionString: process.env.DATABASE_URL,
+    ssl: useSsl ? { rejectUnauthorized: false } : false,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2500
+  }
   : {
-      host: process.env.DB_HOST || 'localhost',
-      port: Number(process.env.DB_PORT || 5432),
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD ?? 'postgres',
-      database: process.env.DB_NAME || 'perfumezone',
-      ssl: useSsl ? { rejectUnauthorized: false } : false,
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2500
-    };
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT || 5432),
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD ?? 'postgres',
+    database: process.env.DB_NAME || 'perfumezone',
+    ssl: useSsl ? { rejectUnauthorized: false } : false,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2500
+  };
 
 const pool = new Pool(DB_CONFIG);
 
@@ -174,9 +187,9 @@ function formatOrder(row, lineItems = null) {
       row.payment_platform ||
       row.paymentPlatform ||
       (row.payment_method === 'googlepay' ? 'Google Pay (UK)' :
-       row.payment_method === 'paypal' ? 'PayPal Express' :
-       row.payment_method === 'klarna' ? 'Klarna (Pay in 3)' :
-       row.payment_method === 'cod' ? 'Cash on Delivery' : 'Stripe / Card Payment'),
+        row.payment_method === 'paypal' ? 'PayPal Express' :
+          row.payment_method === 'klarna' ? 'Klarna (Pay in 3)' :
+            row.payment_method === 'cod' ? 'Cash on Delivery' : 'Stripe / Card Payment'),
     currency: row.currency || 'GBP',
     orderNote: row.order_note || row.orderNote || null,
     trackingNumber: row.tracking_number || row.trackingNumber || '',
@@ -814,12 +827,13 @@ async function initDatabaseTables() {
 initDatabaseTables();
 
 setInterval(() => {
-  checkDbConnection().catch(() => {});
+  checkDbConnection().catch(() => { });
 }, 60000);
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 const wrap = (fn) => (req, res) =>
   fn(req, res).catch((e) => {
@@ -876,7 +890,7 @@ app.get(
               WHERE pc.product_id = p.id AND LOWER(c.handle) = $${idx}
             )
             OR LOWER(REGEXP_REPLACE(COALESCE(p.brand, ''), '[^a-zA-Z0-9]+', '-', 'g')) = $${idx}
-            OR ($${idx} = 'last-chance' AND p.compare_at_price IS NOT NULL AND p.compare_at_price > p.price)
+            OR (($${idx} = 'sale' OR $${idx} = 'last-chance') AND p.compare_at_price IS NOT NULL AND p.compare_at_price > p.price)
           )`);
         }
 
@@ -922,10 +936,12 @@ app.get(
       list = list.filter((p) => {
         const cols = (p.collections || '').toLowerCase().split('|').map((s) => s.trim());
         if (cols.includes(target)) return true;
-        if (target === 'unisex' && (cols.includes('unisex') || (!cols.includes('mens') && !cols.includes('womens')))) return true;
+        if ((target === 'for-him' || target === 'mens') && (cols.includes('for-him') || cols.includes('mens'))) return true;
+        if ((target === 'for-her' || target === 'womens') && (cols.includes('for-her') || cols.includes('womens'))) return true;
+        if ((target === 'unisex-perfume' || target === 'unisex') && (cols.includes('unisex-perfume') || cols.includes('unisex') || (!cols.includes('for-him') && !cols.includes('for-her') && !cols.includes('mens') && !cols.includes('womens')))) return true;
+        if ((target === 'new-releases' || target === 'new-release1' || target === 'new-in') && (cols.includes('new-releases') || cols.includes('new-release1') || cols.includes('new-in') || p.id <= 10)) return true;
         if (target === 'best-sellers' && (cols.includes('best-sellers') || p.price > 40)) return true;
-        if (target === 'new-in' && (cols.includes('new-in') || p.id <= 8)) return true;
-        if (target === 'last-chance' && (cols.includes('last-chance') || (p.compare_at_price && p.compare_at_price > p.price))) return true;
+        if ((target === 'sale' || target === 'last-chance') && (cols.includes('sale') || cols.includes('last-chance') || (p.compare_at_price && p.compare_at_price > p.price))) return true;
         if (p.brand && slugify(p.brand) === target) return true;
         return false;
       });
@@ -1099,7 +1115,7 @@ app.post(
         await client.query('COMMIT');
         return res.json({ ok: true, imported: count, storage: 'postgresql' });
       } catch (err) {
-        await client.query('ROLLBACK').catch(() => {});
+        await client.query('ROLLBACK').catch(() => { });
         console.warn('PostgreSQL import failed, storing in memory:', err.message);
         isDbConnected = false;
       } finally {
@@ -1195,9 +1211,9 @@ app.post(
       paymentPlatform:
         paymentPlatform ||
         (paymentMethod === 'googlepay' ? 'Google Pay (UK)' :
-         paymentMethod === 'paypal' ? 'PayPal Express' :
-         paymentMethod === 'klarna' ? 'Klarna (Pay in 3)' :
-         paymentMethod === 'cod' ? 'Cash on Delivery' : 'Stripe / Card Payment'),
+          paymentMethod === 'paypal' ? 'PayPal Express' :
+            paymentMethod === 'klarna' ? 'Klarna (Pay in 3)' :
+              paymentMethod === 'cod' ? 'Cash on Delivery' : 'Stripe / Card Payment'),
       currency: currency || 'GBP',
       orderNote: orderNote || null,
       trackingNumber: trackingNumber || '',
@@ -1342,7 +1358,7 @@ app.post(
           order: formatOrder(orderRes.rows[0])
         });
       } catch (err) {
-        await client.query('ROLLBACK').catch(() => {});
+        await client.query('ROLLBACK').catch(() => { });
         console.warn('PostgreSQL order insert failed, using in-memory fallback:', err.message);
         isDbConnected = false;
       } finally {
@@ -1468,7 +1484,7 @@ app.delete(
     if (isDbConnected) {
       try {
         await pool.query('DELETE FROM orders WHERE id = $1', [orderId]);
-      } catch {}
+      } catch { }
     }
 
     res.json({ ok: true });
@@ -1499,27 +1515,27 @@ app.post(
     const mergedUser =
       existingIdx >= 0
         ? {
-            ...inMemoryUsers[existingIdx],
-            ...incoming,
-            email: cleanEmail,
-            password: incoming.password || inMemoryUsers[existingIdx].password
-          }
+          ...inMemoryUsers[existingIdx],
+          ...incoming,
+          email: cleanEmail,
+          password: incoming.password || inMemoryUsers[existingIdx].password
+        }
         : {
-            id: incoming.id || Date.now(),
-            name: String(incoming.name || 'Customer').trim(),
-            email: cleanEmail,
-            password: incoming.password || '',
-            role: incoming.role === 'admin' ? 'admin' : 'customer',
-            phone: incoming.phone || '',
-            address: incoming.address || '',
-            apartment: incoming.apartment || '',
-            city: incoming.city || '',
-            postcode: incoming.postcode || '',
-            country: incoming.country || 'United Kingdom',
-            joinedDate:
-              incoming.joinedDate ||
-              new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
-          };
+          id: incoming.id || Date.now(),
+          name: String(incoming.name || 'Customer').trim(),
+          email: cleanEmail,
+          password: incoming.password || '',
+          role: incoming.role === 'admin' ? 'admin' : 'customer',
+          phone: incoming.phone || '',
+          address: incoming.address || '',
+          apartment: incoming.apartment || '',
+          city: incoming.city || '',
+          postcode: incoming.postcode || '',
+          country: incoming.country || 'United Kingdom',
+          joinedDate:
+            incoming.joinedDate ||
+            new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+        };
 
     if (existingIdx >= 0) inMemoryUsers[existingIdx] = mergedUser;
     else inMemoryUsers.push(mergedUser);
@@ -1672,6 +1688,30 @@ app.get(
     }
 
     res.json({ count: inMemorySubscribers.length, subscribers: inMemorySubscribers });
+  })
+);
+
+// GET /api/cms
+app.get(
+  '/api/cms',
+  wrap(async (req, res) => {
+    const cms = readJsonObjectFile(CMS_FILE, {});
+    res.json(cms);
+  })
+);
+
+// POST /api/cms
+app.post(
+  '/api/cms',
+  wrap(async (req, res) => {
+    const incoming = req.body;
+    if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+      return res.status(400).json({ error: 'Invalid CMS payload' });
+    }
+    const current = readJsonObjectFile(CMS_FILE, {});
+    const merged = { ...current, ...incoming };
+    writeJsonFile(CMS_FILE, merged);
+    res.json({ ok: true, cms: merged });
   })
 );
 

@@ -1,11 +1,29 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
-import { NAV } from '../data/nav.js';
+import { useState, useEffect } from 'react';
+import { NAV, BRAND_COLUMNS, BRAND_FEATURE } from '../data/nav.js';
+import { getSiteContent, fetchSiteContentFromBackend } from '../api.js';
 import { useCart } from './CartContext.jsx';
 import { useWishlist } from './WishlistContext.jsx';
 import { useAuth } from './AuthContext.jsx';
 import CountrySelect from './CountrySelect.jsx';
 import { SearchIcon, UserIcon, BagIcon, MenuIcon, CloseIcon, PinIcon, HeartIcon } from './Icons.jsx';
+
+const ensureColumns = (list) => {
+  if (!Array.isArray(list) || !list.length) return NAV;
+  return list.map((item) => {
+    if (item.columns && Array.isArray(item.columns) && item.columns.length > 0) {
+      return item;
+    }
+    if (item.label?.toUpperCase() === 'BRANDS' || item.to === '/collections/all') {
+      return { ...item, columns: BRAND_COLUMNS, feature: BRAND_FEATURE };
+    }
+    const match = NAV.find((orig) => orig.label?.toLowerCase() === item.label?.toLowerCase());
+    if (match?.columns) {
+      return { ...item, columns: match.columns, feature: match.feature };
+    }
+    return item;
+  });
+};
 
 export default function Header() {
   const [hover, setHover] = useState(null);
@@ -18,6 +36,28 @@ export default function Header() {
   const { count, setOpen } = useCart();
   const { count: wishlistCount } = useWishlist();
   const { user, isAdmin } = useAuth();
+
+  const [navItems, setNavItems] = useState(() => {
+    const cmsNav = getSiteContent().headerNav;
+    return ensureColumns(cmsNav);
+  });
+
+  useEffect(() => {
+    fetchSiteContentFromBackend().then((content) => {
+      if (content?.headerNav) {
+        setNavItems(ensureColumns(content.headerNav));
+      }
+    });
+
+    const onContentChange = (e) => {
+      const cmsNav = e.detail?.headerNav || getSiteContent().headerNav;
+      if (cmsNav) {
+        setNavItems(ensureColumns(cmsNav));
+      }
+    };
+    window.addEventListener('pz:content-change', onContentChange);
+    return () => window.removeEventListener('pz:content-change', onContentChange);
+  }, []);
 
   const closeAll = () => {
     setHover(null);
@@ -48,12 +88,12 @@ export default function Header() {
 
         <div className="header-left desktop-only">
           <Link
-            to="/tools/locations"
-            className={'header-util-link' + (location.pathname === '/tools/locations' ? ' active' : '')}
+            to="/pages/locations"
+            className={'header-util-link' + (location.pathname === '/pages/locations' ? ' active' : '')}
             onClick={closeAll}
           >
             <PinIcon />
-            <span>UK Boutiques</span>
+            <span>Store Locations</span>
           </Link>
         </div>
 
@@ -121,10 +161,38 @@ export default function Header() {
 
       <div className="header-nav-bar desktop-only">
         <nav className="main-nav" aria-label="Primary Navigation">
-          {NAV.map((n, i) =>
-            n.to ? (
+          {navItems.map((n, i) =>
+            n.columns && n.columns.length > 0 ? (
+              <div
+                key={n.id || n.label}
+                className="nav-dropdown-wrap"
+                style={{ display: 'inline-block', position: 'relative' }}
+                onMouseEnter={() => setHover(i)}
+                onFocus={() => setHover(i)}
+              >
+                <Link
+                  to={n.to || '/collections/all'}
+                  className={'nav-item' + (hover === i ? ' active' : '') + (location.pathname === n.to ? ' current' : '')}
+                  onClick={(e) => {
+                    // Clicking on BRANDS toggles the dropdown on desktop without navigating away immediately
+                    if (window.innerWidth >= 990) {
+                      e.preventDefault();
+                      setHover(hover === i ? null : i);
+                    } else {
+                      closeAll();
+                    }
+                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                >
+                  {n.label}
+                  <svg style={{ width: 8, height: 8, transform: hover === i ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} viewBox="0 0 19 12" fill="currentColor">
+                    <path d="M9.5 12L0 2.5L2.5 0L9.5 7L16.5 0L19 2.5L9.5 12Z" />
+                  </svg>
+                </Link>
+              </div>
+            ) : (
               <Link
-                key={n.label}
+                key={n.id || n.label}
                 to={n.to}
                 className={'nav-item' + (location.pathname === n.to ? ' active' : '')}
                 onMouseEnter={() => setHover(null)}
@@ -132,17 +200,6 @@ export default function Header() {
               >
                 {n.label}
               </Link>
-            ) : (
-              <button
-                key={n.label}
-                type="button"
-                className={'nav-item' + (hover === i ? ' active' : '')}
-                onMouseEnter={() => setHover(i)}
-                onFocus={() => setHover(i)}
-                onClick={() => setHover(hover === i ? null : i)}
-              >
-                {n.label}
-              </button>
             )
           )}
         </nav>
@@ -162,10 +219,14 @@ export default function Header() {
         </form>
       )}
 
-      {hover !== null && NAV[hover]?.columns && (
-        <div className="mega" onMouseEnter={() => setHover(hover)}>
+      {hover !== null && navItems[hover]?.columns && (
+        <div
+          className="mega"
+          onMouseEnter={() => setHover(hover)}
+          onMouseLeave={() => setHover(null)}
+        >
           <div className="mega-inner">
-            {NAV[hover].columns.map((col) => (
+            {navItems[hover].columns.map((col) => (
               <div key={col.title} className="mega-col">
                 <h4>{col.title}</h4>
                 {col.links.map((l) => (
@@ -174,7 +235,7 @@ export default function Header() {
                     to={l.to}
                     className={location.pathname === l.to ? 'active-link' : ''}
                     onClick={() => {
-                      setHover(null);
+                      closeAll();
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                   >
@@ -183,17 +244,17 @@ export default function Header() {
                 ))}
               </div>
             ))}
-            {NAV[hover].feature && (
+            {navItems[hover].feature && (
               <Link
-                to={NAV[hover].feature.to}
+                to={navItems[hover].feature.to}
                 className="mega-feature"
                 onClick={() => {
-                  setHover(null);
+                  closeAll();
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
                 <div className="ph" />
-                <span>{NAV[hover].feature.label}</span>
+                <span>{navItems[hover].feature.label}</span>
               </Link>
             )}
           </div>
@@ -220,9 +281,9 @@ export default function Header() {
           </button>
         </div>
         <ul className="mobile-nav">
-          {NAV.map((n, i) => (
-            <li key={n.label}>
-              {n.to ? (
+          {navItems.map((n, i) => (
+            <li key={n.id || n.label}>
+              {!n.columns ? (
                 <Link
                   to={n.to}
                   onClick={() => {

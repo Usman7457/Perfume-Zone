@@ -1,6 +1,7 @@
 import { INITIAL_PRODUCTS } from './data/products.js';
 import { INITIAL_BLOGS } from './data/blogs.js';
 import { INITIAL_ORDERS } from './data/orders.js';
+import DEFAULT_SITE_CONTENT from './data/siteContent.json';
 
 // Track backend API availability to avoid repeated slow hangs
 let apiOnline = null; // null = untried, true = online, false = offline
@@ -11,13 +12,113 @@ export const COLLECTION_META = {
     title: 'All Fragrances',
     description: 'Explore our complete library of authentic luxury Arabian perfumes, rare Oud, and artisan extraits at Perfume Zone UK.'
   },
+  'new-releases': {
+    title: 'New Releases',
+    description: 'The freshest creations and new season arrivals from the prestigious perfume houses of Dubai and Europe.'
+  },
   'new-in': {
-    title: 'New In & Latest Releases',
+    title: 'New Releases',
     description: 'The freshest creations and new season arrivals from the prestigious perfume houses of Dubai and Europe.'
   },
   'best-sellers': {
-    title: 'Best Sellers Collection',
+    title: 'Best Sellers',
     description: 'Our most coveted and acclaimed signature perfumes, loved by fragrance connoisseurs across the UK.'
+  },
+  'unisex-perfume': {
+    title: 'Unisex',
+    description: 'Captivating compositions that transcend boundaries—amber, agarwood, tonka bean, and spiced florals.'
+  },
+  'unisex': {
+    title: 'Unisex',
+    description: 'Captivating compositions that transcend boundaries—amber, agarwood, tonka bean, and spiced florals.'
+  },
+  'for-him': {
+    title: 'For Him',
+    description: "Assertive woody, smoky oud, fresh citrus, and spicy leathers crafted exclusively for him."
+  },
+  'mens': {
+    title: 'For Him',
+    description: "Assertive woody, smoky oud, fresh citrus, and spicy leathers crafted exclusively for him."
+  },
+  'for-her': {
+    title: 'For Her',
+    description: "Sensual floral, gourmand vanilla, sweet fruits, and delicate musks crafted exclusively for her."
+  },
+  'womens': {
+    title: 'For Her',
+    description: "Sensual floral, gourmand vanilla, sweet fruits, and delicate musks crafted exclusively for her."
+  },
+  'sale': {
+    title: 'Sale',
+    description: 'Explore limited-time reductions, special fragrance offers, and discounted flacons at Perfume Zone UK.'
+  },
+  'afnan': {
+    title: 'Afnan Perfumes',
+    description: 'Explore Afnan luxury flacons, including Supremacy, Historic, and Rare Passion.'
+  },
+  'al-haramain': {
+    title: 'Al Haramain',
+    description: "Legendary Arabian perfumery featuring Amber Oud, L'Aventure, and exquisite attars."
+  },
+  'arbiyat-prestige': {
+    title: 'Arbiyat Prestige',
+    description: 'Artisan Arabian extraits with opulent sillage and regal flacon design.'
+  },
+  'ard-al-zaafaran': {
+    title: 'Ard Al Zaafaran',
+    description: 'Celebrated oriental blends of pure musk, dark rose, and warm woods.'
+  },
+  'armaf': {
+    title: 'Armaf',
+    description: 'World-renowned masterpieces including Club De Nuit Intense and Odyssey.'
+  },
+  'bujairami': {
+    title: 'Bujairami',
+    description: 'Modern, high-concentration luxury fragrance creations crafted for longevity.'
+  },
+  'fragrance-world': {
+    title: 'Fragrance World',
+    description: 'Exceptional olfactory interpretations of legendary haute parfumerie.'
+  },
+  'french-avenue': {
+    title: 'French Avenue',
+    description: 'Haute French perfumery married with rich oriental Arabian heritage.'
+  },
+  'khadlaj': {
+    title: 'Khadlaj Perfumes',
+    description: 'Over 25 years of artisan Arabian flacons, concentrated oils, and room mists.'
+  },
+  'lattafa': {
+    title: 'Lattafa',
+    description: 'Iconic Dubai perfumery famous for Khamrah, Yara, Asad, and Badee Al Oud.'
+  },
+  'maison-asrar': {
+    title: 'Maison Asrar',
+    description: 'Ultra-luxurious flacons blending royal agarwood, ambergris, and velvet rose.'
+  },
+  'oud-elixir': {
+    title: 'Oud Elixir',
+    description: 'Artisan high-concentration pure extraits capturing Cambodian and royal Dubai oud.'
+  },
+  'paris-corner': {
+    title: 'Paris Corner',
+    description: 'Trendsetting fragrance collections featuring Emir, Ministry of Oud, and Killer Oud.'
+  },
+  'rasasi': {
+    title: 'Rasasi',
+    description: 'Prestigious oriental dynasty famous for Hawas, Shuhrah, and La Yuqawam.'
+  },
+  'rayhaan': {
+    title: 'Rayhaan',
+    description: 'Contemporary Arabian perfumery with electrifying projection and modern aesthetic.'
+  },
+  'swiss-arabian': {
+    title: 'Swiss Arabian',
+    description: 'The pioneer of UAE perfumery, renowned for Shaghaf Oud, Casablanca, and pure attars.'
+  },
+  'zimaya': {
+    title: 'Zimaya',
+    description: 'Exquisite modern compositions by Afnan group featuring Sharaf Blend and Fatima.'
   },
   'fragrance-sets': {
     title: 'Fragrance Discovery & Gift Sets',
@@ -26,18 +127,6 @@ export const COLLECTION_META = {
   'last-chance': {
     title: 'Last Chance & Limited Reductions',
     description: 'Rare flacons and final quantities of limited edition luxury extraits at special pricing.'
-  },
-  'womens': {
-    title: "Women's Fragrances",
-    description: 'Sensual floral, gourmand vanilla, sweet fruits, and delicate musks crafted for her.'
-  },
-  'mens': {
-    title: "Men's Fragrances",
-    description: 'Assertive woody, smoky oud, fresh citrus, and spicy leathers crafted for him.'
-  },
-  'unisex': {
-    title: 'Unisex Fragrances',
-    description: 'Captivating compositions that transcend boundaries—amber, agarwood, tonka bean, and spiced florals.'
   },
   'extrait-de-parfum': {
     title: 'Extrait De Parfum (Pure Perfume)',
@@ -189,6 +278,231 @@ const BLOGS_KEY = 'perfumezone_blogs';
 const SUBSCRIBERS_KEY = 'perfumezone_subscribers';
 const SUBSCRIBERS_INIT_KEY = 'perfumezone_subscribers_init';
 const SITE_SETTINGS_KEY = 'perfumezone_site_settings';
+const CATEGORY_DISCOUNTS_KEY = 'perfumezone_category_discounts';
+
+export const DISCOUNT_CATEGORIES = [
+  { value: 'all', label: 'All Fragrances (Entire Storewide)' },
+  { value: 'for-him', label: "For Him (Men's Fragrances)" },
+  { value: 'for-her', label: "For Her (Women's Fragrances)" },
+  { value: 'unisex-perfume', label: 'Unisex Fragrances' },
+  { value: 'new-releases', label: 'New Releases' },
+  { value: 'best-sellers', label: 'Best Sellers' },
+  { value: 'sale', label: 'Clearance & Special Sale' },
+  { value: 'fragrance-sets', label: 'Fragrance Discovery & Gift Sets' },
+  { value: 'perfume-oils', label: 'Concentrated Perfume Oils (Attar)' },
+  { value: 'deodorants', label: 'Luxury Perfumed Deodorants' },
+  { value: 'air-freshners', label: 'Air & Room Fresheners' },
+  { value: 'lattafa', label: 'Brand: Lattafa' },
+  { value: 'afnan', label: 'Brand: Afnan' },
+  { value: 'rasasi', label: 'Brand: Rasasi' },
+  { value: 'armaf', label: 'Brand: Armaf' },
+  { value: 'swiss-arabian', label: 'Brand: Swiss Arabian' },
+  { value: 'al-haramain', label: 'Brand: Al Haramain' },
+  { value: 'paris-corner', label: 'Brand: Paris Corner' },
+  { value: 'zimaya', label: 'Brand: Zimaya' },
+  { value: 'french-avenue', label: 'Brand: French Avenue' },
+  { value: 'fragrance-world', label: 'Brand: Fragrance World' },
+  { value: 'khadlaj', label: 'Brand: Khadlaj' },
+  { value: 'ard-al-zaafaran', label: 'Brand: Ard Al Zaafaran' }
+];
+
+export const getCategoryDiscounts = () => {
+  try {
+    const raw = localStorage.getItem(CATEGORY_DISCOUNTS_KEY);
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveCategoryDiscount = (rule) => {
+  try {
+    const discounts = getCategoryDiscounts();
+    const id = rule.id || ('disc_' + Date.now());
+    let categories = [];
+    if (Array.isArray(rule.categories)) {
+      categories = rule.categories.filter(Boolean);
+    } else if (typeof rule.category === 'string') {
+      categories = rule.category.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    if (!categories.length) categories = ['all'];
+
+    const cleanRule = {
+      id,
+      title: String(rule.title || 'Category Promotion').trim(),
+      categories,
+      category: categories.join(', '),
+      type: rule.type === 'flat' ? 'flat' : 'percent',
+      value: Math.max(0.1, Number(rule.value) || 10),
+      active: rule.active !== false,
+      createdAt: rule.createdAt || new Date().toISOString()
+    };
+    const idx = discounts.findIndex((d) => d.id === id);
+    if (idx >= 0) {
+      discounts[idx] = cleanRule;
+    } else {
+      discounts.unshift(cleanRule);
+    }
+    localStorage.setItem(CATEGORY_DISCOUNTS_KEY, JSON.stringify(discounts));
+    window.dispatchEvent(new Event('pz:discounts-change'));
+    window.dispatchEvent(new Event('pz:products-change'));
+    return cleanRule;
+  } catch (err) {
+    console.error('Failed to save category discount', err);
+    return null;
+  }
+};
+
+export const toggleCategoryDiscount = (id) => {
+  try {
+    const discounts = getCategoryDiscounts();
+    const item = discounts.find((d) => d.id === id);
+    if (item) {
+      item.active = !item.active;
+      localStorage.setItem(CATEGORY_DISCOUNTS_KEY, JSON.stringify(discounts));
+      window.dispatchEvent(new Event('pz:discounts-change'));
+      window.dispatchEvent(new Event('pz:products-change'));
+      return item;
+    }
+  } catch (err) {
+    console.error('Failed to toggle discount', err);
+  }
+  return null;
+};
+
+export const deleteCategoryDiscount = (id) => {
+  try {
+    const discounts = getCategoryDiscounts().filter((d) => d.id !== id);
+    localStorage.setItem(CATEGORY_DISCOUNTS_KEY, JSON.stringify(discounts));
+    window.dispatchEvent(new Event('pz:discounts-change'));
+    window.dispatchEvent(new Event('pz:products-change'));
+  } catch (err) {
+    console.error('Failed to delete discount', err);
+  }
+};
+
+export const doesProductMatchSingleCategory = (product, category) => {
+  if (!product || !category) return false;
+  const target = String(category).toLowerCase().trim();
+  if (target === 'all') return true;
+
+  const cols = (product.collections || '').toLowerCase().split('|').map((s) => s.trim());
+  if (cols.includes(target)) return true;
+
+  if ((target === 'for-him' || target === 'mens') && (cols.includes('for-him') || cols.includes('mens'))) return true;
+  if ((target === 'for-her' || target === 'womens') && (cols.includes('for-her') || cols.includes('womens'))) return true;
+  if ((target === 'unisex-perfume' || target === 'unisex') && (cols.includes('unisex-perfume') || cols.includes('unisex') || (!cols.includes('for-him') && !cols.includes('for-her') && !cols.includes('mens') && !cols.includes('womens')))) return true;
+  if ((target === 'new-releases' || target === 'new-release1' || target === 'new-in') && (cols.includes('new-releases') || cols.includes('new-release1') || cols.includes('new-in') || product.id <= 10)) return true;
+  if (target === 'best-sellers' && (cols.includes('best-sellers') || product.price > 40)) return true;
+  if ((target === 'sale' || target === 'last-chance') && (cols.includes('sale') || cols.includes('last-chance') || (product.compare_at_price && product.compare_at_price > product.price))) return true;
+
+  const brandNormalized = (product.brand || '').toLowerCase().replace(/[\s\xa0-]+/g, '-');
+  if (brandNormalized === target.replace(/[\s\xa0-]+/g, '-')) return true;
+
+  return false;
+};
+
+export const doesProductMatchCategory = (product, category) => {
+  if (!product || !category) return false;
+  const catList = Array.isArray(category)
+    ? category
+    : String(category).split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+
+  if (!catList.length || catList.includes('all')) return true;
+  return catList.some((cat) => doesProductMatchSingleCategory(product, cat));
+};
+
+export const applyCategoryDiscountsToProducts = (products = []) => {
+  const activeDiscounts = getCategoryDiscounts().filter((d) => d.active);
+  if (!activeDiscounts.length) {
+    return products.map((p) => {
+      const basePrice = p._base_price != null ? p._base_price : p.price;
+      const baseCompare = p._base_compare_at !== undefined ? p._base_compare_at : (p.compare_at_price || null);
+      return {
+        ...p,
+        price: basePrice,
+        compare_at_price: baseCompare,
+        is_on_sale: Boolean(baseCompare && baseCompare > basePrice)
+      };
+    });
+  }
+
+  return products.map((p) => {
+    const basePrice = p._base_price != null ? p._base_price : Number(p.price || 0);
+    const baseCompare = p._base_compare_at !== undefined ? p._base_compare_at : (p.compare_at_price ? Number(p.compare_at_price) : null);
+
+    const matchingRules = activeDiscounts.filter((rule) =>
+      doesProductMatchCategory(p, rule.categories || rule.category)
+    );
+    if (!matchingRules.length) {
+      return {
+        ...p,
+        price: basePrice,
+        compare_at_price: baseCompare,
+        is_on_sale: Boolean(baseCompare && baseCompare > basePrice)
+      };
+    }
+
+    let bestRule = null;
+    let maxSaving = -1;
+
+    for (const rule of matchingRules) {
+      let saving = 0;
+      if (rule.type === 'percent') {
+        saving = (basePrice * rule.value) / 100;
+      } else {
+        saving = rule.value;
+      }
+      if (saving > maxSaving) {
+        maxSaving = saving;
+        bestRule = rule;
+      }
+    }
+
+    if (!bestRule || maxSaving <= 0) {
+      return {
+        ...p,
+        price: basePrice,
+        compare_at_price: baseCompare,
+        is_on_sale: Boolean(baseCompare && baseCompare > basePrice)
+      };
+    }
+
+    const calculatedPrice = Math.max(1, Math.round((basePrice - maxSaving) * 100) / 100);
+    const originalRefPrice = baseCompare && baseCompare > calculatedPrice ? baseCompare : basePrice;
+
+    return {
+      ...p,
+      _base_price: basePrice,
+      _base_compare_at: baseCompare,
+      price: calculatedPrice,
+      compare_at_price: originalRefPrice,
+      is_on_sale: true,
+      hasDiscount: true,
+      discount_rule_title: bestRule.title,
+      discount_label: bestRule.type === 'percent' ? `-${Math.round(bestRule.value)}%` : `-£${bestRule.value}`
+    };
+  });
+};
+
+export const isProductOnSale = (product) => {
+  if (!product) return false;
+  if (product.is_on_sale || product.hasDiscount) return true;
+  if (product.compare_at_price && Number(product.compare_at_price) > Number(product.price)) return true;
+  const activeDiscounts = getCategoryDiscounts().filter((d) => d.active);
+  if (activeDiscounts.length > 0) {
+    const discounted = applyCategoryDiscountsToProducts([product]);
+    if (discounted[0]?.is_on_sale || discounted[0]?.hasDiscount) return true;
+  }
+  return false;
+};
+
+export const hasCartSaleItems = (items = []) => {
+  if (!Array.isArray(items) || items.length === 0) return false;
+  return items.some((item) => isProductOnSale(item));
+};
 
 export const getCustomProducts = () => {
   try {
@@ -307,12 +621,17 @@ export const clearCustomProducts = () => {
   window.dispatchEvent(new Event('pz:products-change'));
 };
 
-export const getAllLocalProducts = () => {
+export const getAllRawLocalProducts = () => {
   const custom = getCustomProducts();
   const deleted = new Set(getDeletedProductHandles());
   const customHandles = new Set(custom.map((p) => p.handle));
   const base = INITIAL_PRODUCTS.filter((p) => !customHandles.has(p.handle) && !deleted.has(p.handle));
   return [...custom.filter((p) => !deleted.has(p.handle)), ...base];
+};
+
+export const getAllLocalProducts = (applyDiscounts = true) => {
+  const raw = getAllRawLocalProducts();
+  return applyDiscounts ? applyCategoryDiscountsToProducts(raw) : raw;
 };
 
 const hasLocalCatalogEdits = () =>
@@ -342,17 +661,17 @@ export const getProducts = async (params = {}) => {
     list = list.filter((p) => {
       const cols = (p.collections || '').toLowerCase().split('|').map((s) => s.trim());
       if (cols.includes(target)) return true;
-      if (target === 'mens' && cols.includes('mens')) return true;
-      if (target === 'womens' && cols.includes('womens')) return true;
-      if (target === 'unisex' && (cols.includes('unisex') || (!cols.includes('mens') && !cols.includes('womens')))) return true;
+      if ((target === 'for-him' || target === 'mens') && (cols.includes('for-him') || cols.includes('mens'))) return true;
+      if ((target === 'for-her' || target === 'womens') && (cols.includes('for-her') || cols.includes('womens'))) return true;
+      if ((target === 'unisex-perfume' || target === 'unisex') && (cols.includes('unisex-perfume') || cols.includes('unisex') || (!cols.includes('for-him') && !cols.includes('for-her') && !cols.includes('mens') && !cols.includes('womens')))) return true;
+      if ((target === 'new-releases' || target === 'new-release1' || target === 'new-in') && (cols.includes('new-releases') || cols.includes('new-release1') || cols.includes('new-in') || p.id <= 10)) return true;
       if (target === 'best-sellers' && (cols.includes('best-sellers') || p.price > 40)) return true;
-      if (target === 'new-in' && (cols.includes('new-in') || p.id <= 8)) return true;
-      if (target === 'last-chance' && (cols.includes('last-chance') || (p.compare_at_price && p.compare_at_price > p.price))) return true;
+      if ((target === 'sale' || target === 'last-chance') && (cols.includes('sale') || cols.includes('last-chance') || (p.compare_at_price && p.compare_at_price > p.price))) return true;
       if (target === 'fragrance-sets' && cols.includes('fragrance-sets')) return true;
       if (target === 'deodorants' && cols.includes('deodorants')) return true;
       if (target === 'air-freshners' && cols.includes('air-freshners')) return true;
       if (target === 'perfume-oils' && cols.includes('perfume-oils')) return true;
-      if (p.brand && p.brand.toLowerCase().replace(/\s+/g, '-') === target) return true;
+      if (p.brand && p.brand.toLowerCase().replace(/[\s\xa0-]+/g, '-') === target.replace(/[\s\xa0-]+/g, '-')) return true;
       return false;
     });
   }
@@ -396,18 +715,19 @@ export const getProduct = async (handle) => {
   const deleted = new Set(getDeletedProductHandles());
   if (deleted.has(handle)) throw new Error('404');
 
+  const all = getAllLocalProducts(true);
+  const found = all.find((p) => p.handle === handle);
+  if (found) return found;
+
   const customMatch = getCustomProducts().find((p) => p.handle === handle);
-  if (customMatch) return customMatch;
+  if (customMatch) return applyCategoryDiscountsToProducts([customMatch])[0];
 
   if (shouldTryApi()) {
     try {
       const res = await get('/api/products/' + handle, 2000);
-      if (res && res.title) return res;
+      if (res && res.title) return applyCategoryDiscountsToProducts([res])[0];
     } catch { }
   }
-  const all = getAllLocalProducts();
-  const found = all.find((p) => p.handle === handle);
-  if (found) return found;
   throw new Error('404');
 };
 
@@ -747,7 +1067,15 @@ export const DEFAULT_SITE_SETTINGS = {
   promoDescription: 'Enjoy 10% off your entire first purchase across all collections with no minimum spend required.',
   offersHeadline: 'Perfume Zone Special Offers',
   offersSubheadline:
-    'Experience world-class Arabian fragrances with our current promotions, complimentary gifts, and limited-time savings at perfumezone.uk.'
+    'Experience world-class Arabian fragrances with our current promotions, complimentary gifts, and limited-time savings at perfumezone.uk.',
+  popupEnabled: true,
+  popupTitle: '10% Off Your First Fragrance',
+  popupSubtitle: 'EXCLUSIVE WELCOME PRIVILEGE',
+  popupDescription: 'Unlock instant savings across authentic Dubai luxury perfumes, rare artisan oud, and concentrated attars with code PERFUME10.',
+  popupCode: 'PERFUME10',
+  popupImage: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
+  popupCtaText: 'Shop New Arrivals & Offers',
+  popupCtaLink: '/collections/all'
 };
 
 export const getSiteSettings = () => {
@@ -780,6 +1108,139 @@ export const resetSiteSettings = () => {
   return DEFAULT_SITE_SETTINGS;
 };
 
+// ==========================================
+// STOREFRONT CMS CONTENT MANAGEMENT
+// ==========================================
+export const SITE_CMS_KEY = 'perfumezone_site_cms';
+
+export const getSiteContent = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SITE_CMS_KEY));
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      return {
+        ...DEFAULT_SITE_CONTENT,
+        ...raw,
+        headerNav: (Array.isArray(raw.headerNav) && raw.headerNav.length ? raw.headerNav : DEFAULT_SITE_CONTENT.headerNav).map((n) => {
+          const matchDefault = DEFAULT_SITE_CONTENT.headerNav.find((d) => d.id === n.id || d.label?.toLowerCase() === n.label?.toLowerCase());
+          if (matchDefault?.columns && (!n.columns || !n.columns.length)) {
+            return { ...matchDefault, ...n, columns: matchDefault.columns, feature: matchDefault.feature };
+          }
+          return n;
+        }),
+        home: {
+          ...DEFAULT_SITE_CONTENT.home,
+          ...(raw.home || {}),
+          heroSlides: Array.isArray(raw.home?.heroSlides) && raw.home.heroSlides.length ? raw.home.heroSlides : DEFAULT_SITE_CONTENT.home.heroSlides,
+          trustBadges: Array.isArray(raw.home?.trustBadges) && raw.home.trustBadges.length ? raw.home.trustBadges : DEFAULT_SITE_CONTENT.home.trustBadges,
+          middleBanner: { ...DEFAULT_SITE_CONTENT.home.middleBanner, ...(raw.home?.middleBanner || {}) }
+        },
+        contact: { ...DEFAULT_SITE_CONTENT.contact, ...(raw.contact || {}) },
+        about: {
+          ...DEFAULT_SITE_CONTENT.about,
+          ...(raw.about || {}),
+          values: Array.isArray(raw.about?.values) && raw.about.values.length ? raw.about.values : DEFAULT_SITE_CONTENT.about.values
+        },
+        faq: {
+          ...DEFAULT_SITE_CONTENT.faq,
+          ...(raw.faq || {}),
+          categories: Array.isArray(raw.faq?.categories) && raw.faq.categories.length ? raw.faq.categories : DEFAULT_SITE_CONTENT.faq.categories
+        },
+        wholesale: {
+          ...DEFAULT_SITE_CONTENT.wholesale,
+          ...(raw.wholesale || {}),
+          benefits: Array.isArray(raw.wholesale?.benefits) && raw.wholesale.benefits.length ? raw.wholesale.benefits : DEFAULT_SITE_CONTENT.wholesale.benefits
+        },
+        footer: {
+          ...DEFAULT_SITE_CONTENT.footer,
+          ...(raw.footer || {}),
+          socialLinks: Array.isArray(raw.footer?.socialLinks) && raw.footer.socialLinks.length ? raw.footer.socialLinks : DEFAULT_SITE_CONTENT.footer.socialLinks,
+          companyLinks: Array.isArray(raw.footer?.companyLinks) && raw.footer.companyLinks.length ? raw.footer.companyLinks : DEFAULT_SITE_CONTENT.footer.companyLinks,
+          legalLinks: Array.isArray(raw.footer?.legalLinks) && raw.footer.legalLinks.length ? raw.footer.legalLinks : DEFAULT_SITE_CONTENT.footer.legalLinks
+        }
+      };
+    }
+  } catch {}
+  return DEFAULT_SITE_CONTENT;
+};
+
+export const saveSiteContent = (sectionOrFull, data = null) => {
+  const current = getSiteContent();
+  let next;
+  if (data !== null && typeof sectionOrFull === 'string') {
+    next = {
+      ...current,
+      [sectionOrFull]: data
+    };
+  } else if (typeof sectionOrFull === 'object') {
+    next = {
+      ...current,
+      ...sectionOrFull
+    };
+  } else {
+    next = current;
+  }
+
+  try {
+    localStorage.setItem(SITE_CMS_KEY, JSON.stringify(next));
+  } catch (err) {
+    console.warn('Failed saving CMS to localStorage:', err);
+  }
+
+  window.dispatchEvent(new CustomEvent('pz:content-change', { detail: next }));
+
+  // Non-blocking sync to server if available
+  fetch('/api/cms', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(next)
+  }).catch(() => {});
+
+  return next;
+};
+
+export const resetSiteContent = (section = null) => {
+  if (section && DEFAULT_SITE_CONTENT[section]) {
+    const current = getSiteContent();
+    const next = { ...current, [section]: JSON.parse(JSON.stringify(DEFAULT_SITE_CONTENT[section])) };
+    try {
+      localStorage.setItem(SITE_CMS_KEY, JSON.stringify(next));
+    } catch {}
+    window.dispatchEvent(new CustomEvent('pz:content-change', { detail: next }));
+    fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(next)
+    }).catch(() => {});
+    return next;
+  } else {
+    try {
+      localStorage.removeItem(SITE_CMS_KEY);
+    } catch {}
+    window.dispatchEvent(new CustomEvent('pz:content-change', { detail: DEFAULT_SITE_CONTENT }));
+    fetch('/api/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(DEFAULT_SITE_CONTENT)
+    }).catch(() => {});
+    return DEFAULT_SITE_CONTENT;
+  }
+};
+
+export const fetchSiteContentFromBackend = async () => {
+  try {
+    const res = await fetch('/api/cms');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length > 0) {
+        localStorage.setItem(SITE_CMS_KEY, JSON.stringify(data));
+        window.dispatchEvent(new CustomEvent('pz:content-change', { detail: data }));
+        return data;
+      }
+    }
+  } catch {}
+  return getSiteContent();
+};
+
 export const CURRENCIES = {
   GBP: { code: 'GBP', symbol: '£', rate: 1.0, label: 'United Kingdom (GBP £)' },
   EUR: { code: 'EUR', symbol: '€', rate: 1.17, label: 'Eurozone (EUR €)' },
@@ -807,4 +1268,45 @@ export const money = (n, customCurrency = null) => {
   const num = Number(n || 0);
   const converted = num * (cur.rate || 1.0);
   return `${cur.symbol}${converted.toFixed(2)}`;
+};
+
+/**
+ * Converts a selected image file from local device to an optimized Base64 data URL.
+ * Automatically downscales large images using canvas to prevent localStorage / JSON quota overflow.
+ */
+export const fileToOptimizedDataUrl = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.85) => {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve('');
+    if (!file.type || !file.type.startsWith('image/')) {
+      return reject(new Error('Please select an image file (JPEG, PNG, WebP).'));
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed reading file from local storage.'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Failed loading image.'));
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        resolve(canvas.toDataURL(outputType, quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 };

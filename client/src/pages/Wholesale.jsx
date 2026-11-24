@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckIcon, ShieldIcon } from '../components/Icons.jsx';
+import { getSiteContent } from '../api.js';
 
 export default function Wholesale() {
   const [form, setForm] = useState({
@@ -13,37 +14,44 @@ export default function Wholesale() {
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [wholesaleData, setWholesaleData] = useState(() => getSiteContent().wholesale || {});
+
+  useEffect(() => {
+    const onContentChange = (e) => {
+      setWholesaleData(e.detail?.wholesale || getSiteContent().wholesale || {});
+    };
+    window.addEventListener('pz:content-change', onContentChange);
+    return () => window.removeEventListener('pz:content-change', onContentChange);
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitted(true);
   };
 
+  const benefits = wholesaleData.benefits || [];
+
   return (
     <div className="container wholesale-page">
       <header className="page-header center">
-        <span className="eyebrow">B2B &amp; TRADE PARTNERSHIPS</span>
-        <h1>Wholesale Perfume Distribution</h1>
+        <span className="eyebrow">{wholesaleData.eyebrow || 'B2B & TRADE PARTNERSHIPS'}</span>
+        <h1>{wholesaleData.title || 'Wholesale Perfume Distribution'}</h1>
         <p className="muted max-prose">
-          Partner with <strong>Perfume Zone UK</strong> (<a href="https://perfumezone.uk">perfumezone.uk</a>) for competitive wholesale pricing on authentic Arabian luxury perfumes, exclusive house creations, and fast UK dispatch.
+          {wholesaleData.subtitle || 'Partner with Perfume Zone UK (perfumezone.uk) for competitive wholesale pricing on authentic Arabian luxury perfumes, exclusive house creations, and fast UK dispatch.'}
         </p>
       </header>
 
-      <div className="wholesale-benefits-grid">
-        <div className="benefit-card">
-          <ShieldIcon />
-          <h3>100% Guaranteed Stock Provenance</h3>
-          <p className="muted">Direct allocations from premier houses in Dubai and the Gulf. Full batch authentication provided with every wholesale shipment.</p>
+      {benefits.length > 0 && (
+        <div className="wholesale-benefits-grid">
+          {benefits.map((b, i) => (
+            <div key={b.id || i} className="benefit-card">
+              <ShieldIcon />
+              <h3>{b.title}</h3>
+              <p className="muted">{b.desc}</p>
+            </div>
+          ))}
         </div>
-        <div className="benefit-card">
-          <h3>Fast UK Mainland Dispatch</h3>
-          <p className="muted">Inventory held in our London logistics center. Fast next-day pallet and parcel courier delivery across the UK.</p>
-        </div>
-        <div className="benefit-card">
-          <h3>Tiered Volume Discounts</h3>
-          <p className="muted">Competitive margin structures for boutique perfumeries, concept stores, salons, and established online retailers.</p>
-        </div>
-      </div>
+      )}
 
       <div className="wholesale-form-card">
         <h2>Submit a Trade Application</h2>

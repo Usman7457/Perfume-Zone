@@ -12,7 +12,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=800&q=80',
     description: 'An opulent, regal blend of pure Cambodian oud, smokey incense, dark Bulgarian rose, and warm amber. Crafted for discerning connoisseurs who seek unrivaled projection and sillage.',
     size: '100ml Extrait De Parfum',
-    collections: 'new-in|best-sellers|oud-elixir|oud-1|extrait-de-parfum|evening-fragrances|unisex',
+    collections: 'new-releases|new-in|best-sellers|oud-elixir|oud-1|extrait-de-parfum|evening-fragrances|unisex-perfume|unisex|sale',
     in_stock: 1,
     notes: { top: 'Saffron, Bergamot, Nutmeg', middle: 'Bulgarian Rose, Cambodian Oud, Labdanum', base: 'Ambergris, Musk, Smoked Leather' }
   },
@@ -29,7 +29,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80',
     description: 'A crisp, exhilarating composition capturing the essence of fresh mountain air. Sparkling citrus and green tea harmonise with a subtle wood and musk foundation.',
     size: '100ml Eau De Parfum',
-    collections: 'new-in|afnan|mens|everyday-fragrances|summer-fragrances',
+    collections: 'new-releases|new-in|afnan|for-him|mens|everyday-fragrances|summer-fragrances|sale',
     in_stock: 1,
     notes: { top: 'Bergamot, Mandarin Orange', middle: 'Green Tea, Blackcurrant', base: 'Musk, Sandalwood, Wood Notes' }
   },
@@ -46,7 +46,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?auto=format&fit=crop&w=800&q=80',
     description: 'An iconic oriental gourmand fragrance that envelops you in passion. Sweet praline, velvety rose, and precious agarwood melt into golden vanilla and amber.',
     size: '75ml Eau De Parfum',
-    collections: 'best-sellers|swiss-arabian|gourmand|oud-1|winter|unisex',
+    collections: 'best-sellers|swiss-arabian|gourmand|oud-1|winter|unisex-perfume|unisex|sale',
     in_stock: 1,
     notes: { top: 'Saffron', middle: 'Rose, Agarwood (Oud), Praline', base: 'Vanilla, Amber, Oud' }
   },
@@ -63,7 +63,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=800&q=80',
     description: 'A sumptuous warm spicy masterpiece infused with sweet dates, cinnamon, roasted tonka bean, and creamy vanilla. Presented in an exquisite crystal-cut decanter bottle.',
     size: '100ml Eau De Parfum',
-    collections: 'new-in|best-sellers|lattafa|gourmand|amber|evening-fragrances|unisex',
+    collections: 'new-releases|new-in|best-sellers|lattafa|gourmand|amber|evening-fragrances|unisex-perfume|unisex|sale',
     in_stock: 1,
     notes: { top: 'Cinnamon, Nutmeg, Bergamot', middle: 'Dates, Praline, Tuberose, Mahonial', base: 'Vanilla, Tonka Bean, Benzoin, Myrrh, Akigalawood' }
   },
@@ -80,7 +80,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
     description: 'Indulgent, seductive, and irresistibly intoxicating. Notes of dates, cognac aroma, and spiced vanilla create a rich and opulent aura that lasts through the night.',
     size: '100ml Extrait De Parfum',
-    collections: 'zimaya|gourmand|amber|autumn|winter|unisex|new-in',
+    collections: 'new-releases|new-in|best-sellers|zimaya|gourmand|amber|autumn|winter|unisex-perfume|unisex|sale',
     in_stock: 1,
     notes: { top: 'Dates, Nutmeg, Cinnamon', middle: 'Vanilla, Praline, Tuberose', base: 'Tonka Bean, Benzoin, Amberwood' }
   },
@@ -97,7 +97,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=800&q=80',
     description: 'An assertive and modern masculine statement with aromatic lavender, fresh mint, spicy cinnamon, and a seductive base of vanilla and dark woods.',
     size: '100ml Eau De Parfum',
-    collections: 'rayhaan|mens|everyday-fragrances|woody|spring-collection',
+    collections: 'new-releases|new-in|rayhaan|for-him|mens|everyday-fragrances|woody|spring-collection|sale',
     in_stock: 1,
     notes: { top: 'Mint, Bergamot, Cardamom', middle: 'Lavender, Cinnamon, Cumin', base: 'Vanilla, Amber, Tonka Bean, Cedarwood' }
   },
@@ -114,7 +114,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=800&q=80',
     description: 'A crown jewel in niche perfumery. Each drop is deep, multifaceted and layered with white pepper, cardamom, luxurious cedarwood, and radiant golden amber.',
     size: '100ml Eau De Parfum',
-    collections: 'ajmal|amber|woody|evening-fragrances|unisex|best-sellers',
+    collections: 'best-sellers|ajmal|amber|woody|evening-fragrances|unisex-perfume|unisex|for-him|sale',
     in_stock: 1,
     notes: { top: 'White Pepper, Apple, Lavender, Cardamom', middle: 'Orris, Cedarwood', base: 'Amber, Patchouli, Woody Notes' }
   },
@@ -131,7 +131,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&w=800&q=80',
     description: 'The celebrated aquatic powerhouse. Fresh apple, cinnamon, citrus bergamot with aquatic marine accords and seductive ambergris.',
     size: '100ml Eau De Parfum',
-    collections: 'best-sellers|rasasi|mens|summer-fragrances|everyday-fragrances|fruity-1',
+    collections: 'best-sellers|rasasi|for-him|mens|summer-fragrances|everyday-fragrances|fruity-1|sale',
     in_stock: 1,
     notes: { top: 'Apple, Bergamot, Lemon, Cinnamon', middle: 'Watery Notes, Plum, Orange Blossom, Cardamom', base: 'Ambergris, Musk, Patchouli, Driftwood' }
   },
@@ -148,7 +148,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
     description: 'An authentic homage to traditional Arabian majlis bakhoor. Frankincense, myrrh, smoky woods, and sensual white amber that lingers gracefully.',
     size: '100ml Extrait De Parfum',
-    collections: 'blends-of-dubai|extrait-de-parfum|oud-1|woody|evening-fragrances|unisex',
+    collections: 'new-releases|blends-of-dubai|extrait-de-parfum|oud-1|woody|evening-fragrances|unisex-perfume|unisex|sale',
     in_stock: 1,
     notes: { top: 'Frankincense, Aldehydes, Saffron', middle: 'Smoky Woods, Cashmere, Rose', base: 'Oud, White Amber, Musk' }
   },
@@ -165,7 +165,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1563178406-4cdc2923acbc?auto=format&fit=crop&w=800&q=80',
     description: 'Pure concentrated perfume oil (Attar). Alcohol-free and intensely skin-loving with velvety white musk, powdery iris, and fresh lily of the valley.',
     size: '12ml Concentrated Perfume Oil',
-    collections: 'viali|perfume-oils|womens|unisex|spring-collection',
+    collections: 'viali|perfume-oils|for-her|womens|unisex-perfume|unisex|spring-collection|sale',
     in_stock: 1,
     notes: { top: 'Lily of the Valley, Lotus Flower', middle: 'Powdery Notes, White Iris', base: 'Velvet White Musk, Clean Cedar' }
   },
@@ -182,7 +182,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=800&q=80',
     description: 'A delectable marriage of crystalline sugar roses and rich Madagascan vanilla bean with cedarwood undertones.',
     size: '100ml Eau De Parfum',
-    collections: 'gulf-orchid|womens|floral|gourmand|everyday-fragrances',
+    collections: 'new-releases|gulf-orchid|for-her|womens|floral|gourmand|everyday-fragrances|sale',
     in_stock: 1,
     notes: { top: 'Calabrian Lemon, Dew Drops', middle: 'Turkish Rose, Sugared Petals', base: 'Vanilla, White Musk, Cedar' }
   },
@@ -199,7 +199,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&w=800&q=80',
     description: 'Timeless luxury captured in a flacon. Damascus rose petals infused with rich agarwood oil and warm amber.',
     size: '100ml Eau De Parfum',
-    collections: 'essential-perfume|floral|oud-1|womens|evening-fragrances',
+    collections: 'essential-perfume|floral|oud-1|for-her|womens|evening-fragrances|sale',
     in_stock: 1,
     notes: { top: 'Taif Rose, Pink Pepper', middle: 'Damask Rose, Clove, Agarwood', base: 'Amber, Praline, Agarwood' }
   },
@@ -216,7 +216,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
     description: 'A lavish presentation box containing five 10ml travel flacons of Oud Elixir’s most prestigious extraits: Dubai Oud Intense, Amber Mirage, Royal Musk, Smoked Leather, and Taif Rose.',
     size: '5 x 10ml Luxury Discovery Set',
-    collections: 'fragrance-sets|oud-elixir|new-in|best-sellers|unisex|oud-1|extrait-de-parfum',
+    collections: 'fragrance-sets|oud-elixir|new-releases|new-in|best-sellers|unisex-perfume|unisex|oud-1|extrait-de-parfum|sale',
     in_stock: 1,
     notes: { top: 'Assorted Royal Accords', middle: 'Cambodian Oud, Taif Rose, Saffron', base: 'Ambergris, Musk, Cedarwood' }
   },
@@ -233,7 +233,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1563178406-4cdc2923acbc?auto=format&fit=crop&w=800&q=80',
     description: 'The ultimate masculine gift presentation. Includes a full-size 100ml Eau De Parfum and matching 150ml perfumed deodorant spray in an embossed collector box.',
     size: '100ml EDP + 150ml Deodorant Set',
-    collections: 'fragrance-sets|afnan|mens|best-sellers|fruity-1|woody',
+    collections: 'fragrance-sets|afnan|for-him|mens|best-sellers|fruity-1|woody|sale',
     in_stock: 1,
     notes: { top: 'Apple, Bergamot, Blackcurrant, Pineapple', middle: 'Rose, Birch, Moroccan Jasmine, Patchouli', base: 'Oakmoss, Musk, Ambergris, Vanilla' }
   },
@@ -250,7 +250,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=800&q=80',
     description: 'Rich, warming perfumed all-over deodorant spray echoing the sweet dates, cinnamon, and vanilla notes of Khamrah.',
     size: '200ml Luxury Deodorant Body Spray',
-    collections: 'deodorants|lattafa|gourmand|unisex|new-in',
+    collections: 'deodorants|lattafa|gourmand|unisex-perfume|unisex|new-releases|new-in|sale',
     in_stock: 1,
     notes: { top: 'Cinnamon, Nutmeg', middle: 'Dates, Praline', base: 'Vanilla, Tonka Bean' }
   },
@@ -267,7 +267,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=800&q=80',
     description: 'Invigorating all-day perfumed body spray featuring crisp birch, pineapple, and smoky woods for lasting freshness.',
     size: '200ml Luxury Deodorant Body Spray',
-    collections: 'deodorants|afnan|mens|summer-fragrances|fruity-1',
+    collections: 'deodorants|afnan|for-him|mens|summer-fragrances|fruity-1|sale',
     in_stock: 1,
     notes: { top: 'Pineapple, Bergamot', middle: 'Birch, Jasmine', base: 'Musk, Ambergris' }
   },
@@ -284,7 +284,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
     description: 'Transform your living space with the rich aromas of traditional Arabian bakhoor, frankincense, amber, and aged cedarwood.',
     size: '300ml Luxury Room & Linen Spray',
-    collections: 'air-freshners|blends-of-dubai|oud-1|unisex',
+    collections: 'air-freshners|blends-of-dubai|oud-1|unisex-perfume|unisex|sale',
     in_stock: 1,
     notes: { top: 'Frankincense, Saffron', middle: 'Smoky Woods, Cashmere', base: 'Agarwood, Amber' }
   },
@@ -301,7 +301,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&w=800&q=80',
     description: 'Enchanting room mist infused with sweet vanilla, caramel, sandalwood, and soft incense.',
     size: '300ml Atmospheric Fragrance Mist',
-    collections: 'air-freshners|lattafa|gourmand|unisex',
+    collections: 'air-freshners|lattafa|gourmand|unisex-perfume|unisex|sale',
     in_stock: 1,
     notes: { top: 'Vanilla, Sugar', middle: 'Oud, Sandalwood', base: 'Incense, Amber' }
   },
@@ -318,7 +318,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1563178406-4cdc2923acbc?auto=format&fit=crop&w=800&q=80',
     description: 'A sophisticated citrus-woody fragrance featuring sparkling grapefruit, spicy pink pepper, and rich ambroxan on a cedar base.',
     size: '90ml Eau De Parfum',
-    collections: 'rue-broca|mens|everyday-fragrances|woody|summer-fragrances|fruity-1',
+    collections: 'new-releases|new-in|rue-broca|for-him|mens|everyday-fragrances|woody|summer-fragrances|fruity-1|sale',
     in_stock: 1,
     notes: { top: 'Grapefruit, Bergamot', middle: 'Pink Pepper, Ginger', base: 'Ambroxan, Cedarwood, Vetiver' }
   },
@@ -335,7 +335,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=800&q=80',
     description: 'An alluring oriental gourmand accord opening with crisp apple and mandarin, leading to warm vanilla, rose, and ambergris.',
     size: '100ml Eau De Parfum',
-    collections: 'ard-al-zaafaran|fruity-1|amber|unisex|best-sellers|gourmand',
+    collections: 'best-sellers|ard-al-zaafaran|fruity-1|amber|unisex-perfume|unisex|gourmand|sale',
     in_stock: 1,
     notes: { top: 'Apple, Mandarin Orange, Vanilla', middle: 'Rose, Ylang-Ylang, Spices', base: 'Ambergris, Sandalwood, White Musk' }
   },
@@ -352,7 +352,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80',
     description: 'Bright and opulent golden fragrance blending pineapple, bergamot, jasmine, and warm vanilla with sandalwood.',
     size: '100ml Eau De Parfum',
-    collections: 'ard-al-zaafaran|fruity-1|floral|womens|everyday-fragrances|spring-collection',
+    collections: 'for-her|womens|ard-al-zaafaran|fruity-1|floral|everyday-fragrances|spring-collection|best-sellers|sale',
     in_stock: 1,
     notes: { top: 'Pineapple, Bergamot', middle: 'Jasmine, Rose, Carnation', base: 'Vanilla, Sandalwood, Tonka Bean' }
   },
@@ -369,7 +369,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
     description: 'Final quantities of Viali’s coveted Santal Blanc. Creamy Australian sandalwood, white cardamom, and velvety iris.',
     size: '100ml Eau De Parfum',
-    collections: 'last-chance|viali|woody|unisex|winter|autumn',
+    collections: 'sale|last-chance|viali|woody|unisex-perfume|unisex|winter|autumn',
     in_stock: 1,
     notes: { top: 'White Cardamom, Fig Nectar', middle: 'Iris, Violet Blossom', base: 'Sandalwood, Tonka, Amber' }
   },
@@ -386,7 +386,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80',
     description: 'Three 15ml refillable travel atomisers housed in a leatherette pouch. High Extrait concentration of Damascus Rose & Oud.',
     size: '3 x 15ml Extrait De Parfum Set',
-    collections: 'fragrance-sets|essential-perfume|last-chance|floral|womens|oud-1',
+    collections: 'fragrance-sets|essential-perfume|sale|last-chance|floral|for-her|womens|oud-1',
     in_stock: 1,
     notes: { top: 'Taif Rose, Saffron', middle: 'Damask Rose, Clove', base: 'Agarwood, Amber' }
   },
@@ -403,7 +403,7 @@ export const INITIAL_PRODUCTS = [
     image_url_2: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=800&q=80',
     description: 'A breathtaking unisex gourmand with juicy ripe grapes, crisp apple, caramel, patchouli, and sensual white amber.',
     size: '100ml Eau De Parfum',
-    collections: 'swiss-arabian|fruity-1|gourmand|unisex|autumn|best-sellers',
+    collections: 'best-sellers|swiss-arabian|fruity-1|gourmand|unisex-perfume|unisex|for-her|autumn|sale',
     in_stock: 1,
     notes: { top: 'Apple, Grapes', middle: 'Patchouli, Orris', base: 'Amber, Balsam, Caramel, Musk, Suede' }
   }

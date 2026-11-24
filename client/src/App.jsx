@@ -5,6 +5,7 @@ import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import CartDrawer from './components/CartDrawer.jsx';
 import CookieBanner from './components/CookieBanner.jsx';
+import OfferModal from './components/OfferModal.jsx';
 import { useCurrency } from './components/CurrencyContext.jsx';
 
 // Keep Home eager for fastest LCP/FCP; code-split secondary routes
@@ -42,6 +43,7 @@ export default function App() {
       <a href="#main" className="skip">Skip to content</a>
       <AnnouncementBar />
       <Header />
+      <OfferModal />
       <main id="main">
         <Suspense fallback={<div className="container center page-loader">Loading…</div>}>
           <Routes>
@@ -64,7 +66,10 @@ export default function App() {
             <Route path="/track-order" element={<Account forcedTab="track-order" />} />
 
             {/* Dedicated Informational Pages */}
+            <Route path="/pages/contact" element={<Contact />} />
             <Route path="/pages/contact-us" element={<Contact />} />
+            <Route path="/pages/locations" element={<Stores />} />
+            <Route path="/tools/locations" element={<Stores />} />
             <Route path="/pages/about-us" element={<About />} />
             <Route path="/pages/faqs" element={<Faq />} />
             <Route path="/pages/wholesale" element={<Wholesale />} />
@@ -75,7 +80,6 @@ export default function App() {
             <Route path="/pages/:slug" element={<StaticPage key={pathname} kind="pages" />} />
             <Route path="/policies/:slug" element={<StaticPage key={pathname} kind="policies" />} />
             <Route path="/blogs/fragrance-insights" element={<Blog />} />
-            <Route path="/tools/locations" element={<Stores />} />
 
             {/* 404 Page */}
             <Route path="*" element={<StaticPage key={pathname} kind="404" />} />

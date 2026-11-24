@@ -13,6 +13,7 @@ export default function Cart() {
     total,
     discount,
     coupon,
+    hasSaleItems,
     applyCoupon,
     removeCoupon,
     freeShippingThreshold
@@ -171,31 +172,44 @@ export default function Cart() {
         <div className="cart-summary-card">
           <h3>Order Summary</h3>
 
-          {/* Coupon Code Input */}
-          <form className="coupon-form" onSubmit={handleApplyCoupon}>
-            <div className="coupon-input-group">
-              <input
-                type="text"
-                placeholder="Promo code (e.g. PERFUME10)"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-              />
-              <button type="submit" className="btn ghost">
-                Apply
-              </button>
-            </div>
-            {couponMsg && (
-              <p className={'coupon-msg ' + (couponMsg.ok ? 'success' : 'error')}>
-                {couponMsg.message}
+          {/* Coupon Code Input or Sale Notice */}
+          {hasSaleItems ? (
+            <div className="cart-sale-notice-box">
+              <div className="sale-notice-title">
+                <span className="sale-notice-tag">🏷️ Promotional Pricing Active</span>
+              </div>
+              <p className="sale-notice-desc">
+                Promotional category sale discounts are active on your items. Coupon codes cannot be stacked with items already on sale.
               </p>
-            )}
-          </form>
-
-          {coupon && (
-            <div className="active-coupon-tag">
-              <span>Applied: <strong>{coupon.code}</strong> ({coupon.label})</span>
-              <button onClick={removeCoupon} aria-label="Remove promo code">×</button>
             </div>
+          ) : (
+            <>
+              <form className="coupon-form" onSubmit={handleApplyCoupon}>
+                <div className="coupon-input-group">
+                  <input
+                    type="text"
+                    placeholder="Promo code (e.g. PERFUME10)"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                  />
+                  <button type="submit" className="btn ghost">
+                    Apply
+                  </button>
+                </div>
+                {couponMsg && (
+                  <p className={'coupon-msg ' + (couponMsg.ok ? 'success' : 'error')}>
+                    {couponMsg.message}
+                  </p>
+                )}
+              </form>
+
+              {coupon && (
+                <div className="active-coupon-tag">
+                  <span>Applied: <strong>{coupon.code}</strong> ({coupon.label})</span>
+                  <button onClick={removeCoupon} aria-label="Remove promo code">×</button>
+                </div>
+              )}
+            </>
           )}
 
           <div className="summary-breakdown">

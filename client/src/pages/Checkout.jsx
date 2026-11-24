@@ -12,6 +12,7 @@ export default function Checkout() {
     subtotal,
     discount,
     coupon,
+    hasSaleItems,
     applyCoupon,
     removeCoupon,
     clearCart,
@@ -1002,29 +1003,42 @@ export default function Checkout() {
               ))}
             </div>
 
-            {/* Discount / Coupon form */}
-            <form onSubmit={handleApplyPromo} className="checkout-coupon-form">
-              <input
-                type="text"
-                placeholder="Discount code (try PERFUME10)"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-              />
-              <button type="submit" className="btn ghost">
-                Apply
-              </button>
-            </form>
-            {promoMsg && (
-              <p className={'promo-feedback ' + (promoMsg.ok ? 'success' : 'error')}>
-                {promoMsg.message}
-              </p>
-            )}
-
-            {coupon && (
-              <div className="active-coupon-badge">
-                <span>Code <strong>{coupon.code}</strong> applied ({coupon.label})</span>
-                <button type="button" onClick={removeCoupon}>×</button>
+            {/* Discount / Coupon form or Sale Notice */}
+            {hasSaleItems ? (
+              <div className="checkout-sale-notice-box">
+                <div className="sale-notice-title">
+                  <span className="sale-notice-tag">🏷️ Promotional Pricing Active</span>
+                </div>
+                <p className="sale-notice-desc">
+                  One or more items in your bag have active promotional discounts applied. In line with store policy, coupon codes cannot be stacked on items already on sale.
+                </p>
               </div>
+            ) : (
+              <>
+                <form onSubmit={handleApplyPromo} className="checkout-coupon-form">
+                  <input
+                    type="text"
+                    placeholder="Discount code (try PERFUME10)"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                  />
+                  <button type="submit" className="btn ghost">
+                    Apply
+                  </button>
+                </form>
+                {promoMsg && (
+                  <p className={'promo-feedback ' + (promoMsg.ok ? 'success' : 'error')}>
+                    {promoMsg.message}
+                  </p>
+                )}
+
+                {coupon && (
+                  <div className="active-coupon-badge">
+                    <span>Code <strong>{coupon.code}</strong> applied ({coupon.label})</span>
+                    <button type="button" onClick={removeCoupon}>×</button>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Price Calculations */}

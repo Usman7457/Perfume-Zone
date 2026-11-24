@@ -74,10 +74,11 @@ export default function Product() {
   const isLowStock = inStock && stockQty > 0 && stockQty <= 5;
   const isOutOfStock = !inStock || stockQty === 0;
   const sku = p.sku || ('PZ-' + String(p.id || 1).padStart(4, '0') + (p.brand ? '-' + p.brand.slice(0, 3).toUpperCase() : ''));
+  const LEGACY_DUPES = new Set(['all', 'mens', 'womens', 'unisex', 'new-in', 'last-chance']);
   const categoriesList = (p.collections || '')
     .split('|')
     .map((c) => c.trim())
-    .filter(Boolean)
+    .filter((handle) => Boolean(handle) && !LEGACY_DUPES.has(handle))
     .map((handle) => ({
       handle,
       title: COLLECTION_META[handle]?.title || handle.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())

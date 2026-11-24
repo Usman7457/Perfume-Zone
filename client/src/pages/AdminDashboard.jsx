@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, NavLink, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext.jsx';
 import {
@@ -19,9 +19,16 @@ import {
   saveSiteSettings,
   resetSiteSettings,
   getSubscribersAdmin,
-  deleteSubscriberAdmin
+  deleteSubscriberAdmin,
+  DISCOUNT_CATEGORIES,
+  getCategoryDiscounts,
+  saveCategoryDiscount,
+  toggleCategoryDiscount,
+  deleteCategoryDiscount
 } from '../api.js';
-import { ShieldIcon, TruckIcon, UserIcon, CheckIcon, BagIcon, HeartIcon } from '../components/Icons.jsx';
+import { ShieldIcon, TruckIcon, UserIcon, CheckIcon, BagIcon, HeartIcon, TagIcon } from '../components/Icons.jsx';
+import CmsEditor from '../components/CmsEditor.jsx';
+import ImageUploadField from '../components/ImageUploadField.jsx';
 
 const EMPTY_PRODUCT_FORM = {
   handle: '',
@@ -65,6 +72,25 @@ const EMPTY_USER_FORM = {
   city: '',
   postcode: ''
 };
+
+const EMPTY_DISCOUNT_FORM = {
+  id: '',
+  title: '',
+  categories: ['all'],
+  category: 'all',
+  type: 'percent',
+  value: '20',
+  active: true
+};
+
+const DISCOUNT_PRESETS = [
+  { title: 'Flash Sale: 20% Off For Him', categories: ['for-him'], category: 'for-him', type: 'percent', value: '20' },
+  { title: 'Spring Special: 20% Off For Her', categories: ['for-her'], category: 'for-her', type: 'percent', value: '20' },
+  { title: 'Exclusive: 15% Off Unisex', categories: ['unisex-perfume'], category: 'unisex-perfume', type: 'percent', value: '15' },
+  { title: 'Storewide: 10% Off Everything', categories: ['all'], category: 'all', type: 'percent', value: '10' },
+  { title: 'VIP Offer: £10 Flat Off Best Sellers', categories: ['best-sellers'], category: 'best-sellers', type: 'flat', value: '10' },
+  { title: 'Brand Event: 25% Off Lattafa', categories: ['lattafa'], category: 'lattafa', type: 'percent', value: '25' }
+];
 
 const ORDER_STATUSES = [
   'Confirmed',
@@ -127,12 +153,27 @@ export default function AdminDashboard() {
     promoTitle: '',
     promoDescription: '',
     offersHeadline: '',
-    offersSubheadline: ''
+    offersSubheadline: '',
+    popupEnabled: true,
+    popupTitle: '',
+    popupSubtitle: '',
+    popupDescription: '',
+    popupImage: '',
+    popupCtaText: '',
+    popupCtaLink: ''
   });
 
   // Users tab states
   const [editingUser, setEditingUser] = useState(null);
   const [userForm, setUserForm] = useState(EMPTY_USER_FORM);
+
+  // Discounts tab states
+  const discountFormRef = useRef(null);
+  const [discounts, setDiscounts] = useState(getCategoryDiscounts());
+  const [editingDiscount, setEditingDiscount] = useState(null);
+  const [discountForm, setDiscountForm] = useState(EMPTY_DISCOUNT_FORM);
+  const [catSearch, setCatSearch] = useState('');
+  const [catDropdownOpen, setCatDropdownOpen] = useState(false);
 
   const notify = (msg) => {
     setToast(msg);
@@ -153,10 +194,18 @@ export default function AdminDashboard() {
       promoTitle: s.promoTitle || '',
       promoDescription: s.promoDescription || '',
       offersHeadline: s.offersHeadline || '',
-      offersSubheadline: s.offersSubheadline || ''
+      offersSubheadline: s.offersSubheadline || '',
+      popupEnabled: s.popupEnabled !== false,
+      popupTitle: s.popupTitle || '',
+      popupSubtitle: s.popupSubtitle || '',
+      popupDescription: s.popupDescription || '',
+      popupImage: s.popupImage || '',
+      popupCtaText: s.popupCtaText || '',
+      popupCtaLink: s.popupCtaLink || ''
     });
     const subs = await getSubscribersAdmin();
     setSubscribers(Array.isArray(subs) ? subs : []);
+    setDiscounts(getCategoryDiscounts());
   };
 
   useEffect(() => {
@@ -166,11 +215,13 @@ export default function AdminDashboard() {
     window.addEventListener('pz:orders-change', onChange);
     window.addEventListener('pz:blogs-change', onChange);
     window.addEventListener('pz:settings-change', onChange);
+    window.addEventListener('pz:discounts-change', onChange);
     return () => {
       window.removeEventListener('pz:products-change', onChange);
       window.removeEventListener('pz:orders-change', onChange);
       window.removeEventListener('pz:blogs-change', onChange);
       window.removeEventListener('pz:settings-change', onChange);
+      window.removeEventListener('pz:discounts-change', onChange);
     };
   }, []);
 
@@ -239,8 +290,8 @@ export default function AdminDashboard() {
       handle: p.handle || '',
       title: p.title || '',
       brand: p.brand || '',
-      price: String(p.price ?? ''),
-      compare_at_price: p.compare_at_price ? String(p.compare_at_price) : '',
+      price: String(p._base_price != null ? p._base_price : (p.price ?? '')),
+      compare_at_price: p._base_compare_at !== undefined ? (p._base_compare_at ? String(p._base_compare_at) : '') : (p.compare_at_price ? String(p.compare_at_price) : ''),
       size: p.size || '100ml Eau de Parfum',
       collectionsText: Array.isArray(p.collections) ? p.collections.join(', ') : '',
       image_url: p.image_url || '',
@@ -421,6 +472,149 @@ export default function AdminDashboard() {
     notify(`User account "${userForm.email}" saved.`);
   };
 
+  // --- Handlers: Category Discounts ---
+  const scrollToDiscountForm = () => {
+    setTimeout(() => {
+      if (discountFormRef.current) {
+        discountFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 60);
+  };
+
+  const openNewDiscount = () => {
+    setDiscountForm(EMPTY_DISCOUNT_FORM);
+    setEditingDiscount('new');
+    setCatDropdownOpen(false);
+    scrollToDiscountForm();
+  };
+
+  const openEditDiscount = (d) => {
+    let cats = [];
+    if (Array.isArray(d.categories) && d.categories.length) {
+      cats = d.categories;
+    } else if (d.category) {
+      cats = String(d.category).split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    if (!cats.length) cats = ['all'];
+
+    setDiscountForm({
+      id: d.id,
+      title: d.title || '',
+      categories: cats,
+      category: cats.join(', '),
+      type: d.type || 'percent',
+      value: String(d.value ?? '20'),
+      active: d.active !== false
+    });
+    setEditingDiscount(d.id);
+    setCatDropdownOpen(false);
+    scrollToDiscountForm();
+  };
+
+  const handleToggleCategorySelection = (catValue) => {
+    setDiscountForm((prev) => {
+      let current = [...(prev.categories || ['all'])];
+      if (catValue === 'all') {
+        return { ...prev, categories: ['all'], category: 'all' };
+      }
+      current = current.filter((c) => c !== 'all');
+      if (current.includes(catValue)) {
+        current = current.filter((c) => c !== catValue);
+      } else {
+        current.push(catValue);
+      }
+      if (!current.length) {
+        current = ['all'];
+      }
+      return {
+        ...prev,
+        categories: current,
+        category: current.join(', ')
+      };
+    });
+  };
+
+  const handleSaveDiscount = (e) => {
+    e.preventDefault();
+    if (!discountForm.title.trim()) {
+      notify('Please enter a promotion title.');
+      return;
+    }
+    const val = Number(discountForm.value);
+    if (isNaN(val) || val <= 0) {
+      notify('Please enter a valid discount amount greater than zero.');
+      return;
+    }
+    if (discountForm.type === 'percent' && val > 90) {
+      notify('Percentage discount cannot exceed 90%.');
+      return;
+    }
+    const cats = discountForm.categories && discountForm.categories.length ? discountForm.categories : ['all'];
+    saveCategoryDiscount({
+      ...discountForm,
+      categories: cats,
+      category: cats.join(', '),
+      value: val
+    });
+    setEditingDiscount(null);
+    setDiscountForm(EMPTY_DISCOUNT_FORM);
+    setCatDropdownOpen(false);
+    refreshAll();
+    notify(`Promotion "${discountForm.title}" saved successfully! Store prices updated.`);
+  };
+
+  const handleToggleDiscount = (id) => {
+    const updated = toggleCategoryDiscount(id);
+    refreshAll();
+    if (updated) {
+      notify(`Promotion "${updated.title}" is now ${updated.active ? 'ACTIVE' : 'PAUSED'}.`);
+    }
+  };
+
+  const handleDeleteDiscount = (d) => {
+    if (window.confirm(`Delete promotion "${d.title}"? This will restore original prices on the storefront.`)) {
+      deleteCategoryDiscount(d.id);
+      refreshAll();
+      notify(`Deleted promotion "${d.title}".`);
+    }
+  };
+
+  const applyDiscountPreset = (preset) => {
+    const cats = Array.isArray(preset.categories) ? preset.categories : [preset.category || 'all'];
+    setDiscountForm({
+      id: '',
+      title: preset.title,
+      categories: cats,
+      category: cats.join(', '),
+      type: preset.type,
+      value: String(preset.value),
+      active: true
+    });
+    setEditingDiscount('new');
+    setCatDropdownOpen(false);
+    scrollToDiscountForm();
+  };
+
+  const activeDiscountsCount = discounts.filter((d) => d.active).length;
+
+  const selectedDiscountCategories = useMemo(() => {
+    if (Array.isArray(discountForm.categories) && discountForm.categories.length) {
+      return discountForm.categories;
+    }
+    if (discountForm.category) {
+      return String(discountForm.category).split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    return ['all'];
+  }, [discountForm.categories, discountForm.category]);
+
+  const filteredDiscountCategories = useMemo(() => {
+    if (!catSearch.trim()) return DISCOUNT_CATEGORIES;
+    const q = catSearch.trim().toLowerCase();
+    return DISCOUNT_CATEGORIES.filter(
+      (c) => c.label.toLowerCase().includes(q) || c.value.toLowerCase().includes(q)
+    );
+  }, [catSearch]);
+
   const totalRevenue = orders
     .filter((o) => (o.status || '') !== 'Cancelled')
     .reduce((sum, o) => sum + Number(o.total || 0), 0);
@@ -478,6 +672,11 @@ export default function AdminDashboard() {
                     <span>Products</span>
                     <span className="dash-count-pill">{products.length}</span>
                   </NavLink>
+                  <NavLink to="/admin/discounts" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
+                    <TagIcon />
+                    <span>Category Discounts</span>
+                    <span className="dash-count-pill active-promo">{activeDiscountsCount}</span>
+                  </NavLink>
                   <NavLink to="/admin/orders" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
                     <TruckIcon />
                     <span>Orders</span>
@@ -492,13 +691,16 @@ export default function AdminDashboard() {
               <div className="dash-nav-group">
                 <span className="dash-nav-heading">CMS &amp; Audience</span>
                 <nav className="dash-nav">
+                  <NavLink to="/admin/pages" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
+                    <ShieldIcon /> <span>Pages &amp; Navigation CMS</span>
+                  </NavLink>
                   <NavLink to="/admin/blogs" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
                     <HeartIcon />
                     <span>Blog Posts</span>
                     <span className="dash-count-pill">{blogs.length}</span>
                   </NavLink>
                   <NavLink to="/admin/content" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
-                    <ShieldIcon /> <span>Offers &amp; Banners</span>
+                    <TagIcon /> <span>Offers &amp; Banners</span>
                   </NavLink>
                   <NavLink to="/admin/users" className={({ isActive }) => 'dash-nav-link' + (isActive ? ' active' : '')}>
                     <UserIcon />
@@ -510,9 +712,6 @@ export default function AdminDashboard() {
             </div>
 
             <div className="dash-sidebar-footer">
-              <Link to="/account/orders" className="dash-nav-link">
-                <UserIcon /> <span>Customer Portal View</span>
-              </Link>
               <button
                 type="button"
                 className="btn ghost wide"
@@ -598,6 +797,14 @@ export default function AdminDashboard() {
                   </div>
                   <div className="stat-card">
                     <div className="stat-card-top">
+                      <span className="stat-label">Category Promotions</span>
+                      <span className="stat-icon-badge"><TagIcon /></span>
+                    </div>
+                    <strong className="stat-value">{activeDiscountsCount} Active</strong>
+                    <span className="stat-sub">{discounts.length} rules configured</span>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-card-top">
                       <span className="stat-label">Newsletter List</span>
                       <span className="stat-icon-badge"><CheckIcon /></span>
                     </div>
@@ -636,6 +843,8 @@ export default function AdminDashboard() {
                       + Publish Blog Post
                     </button>
                     <Link to="/admin/content" className="btn ghost">Edit Offers &amp; Promo Codes</Link>
+                    <Link to="/admin/discounts" className="btn ghost">Category Promotions →</Link>
+                    <Link to="/admin/pages" className="btn ghost">Pages &amp; Navigation CMS →</Link>
                   </div>
                 </div>
 
@@ -805,24 +1014,30 @@ export default function AdminDashboard() {
                         />
                       </div>
                     </div>
-                    <div className="form-row-2">
-                      <div className="form-group">
-                        <label>Primary Image URL</label>
-                        <input
-                          type="url"
-                          value={prodForm.image_url}
-                          onChange={(e) => setProdForm({ ...prodForm, image_url: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>Collections (comma-separated)</label>
-                        <input
-                          type="text"
-                          placeholder="all, new-in, men, women, sale, gifts"
-                          value={prodForm.collectionsText}
-                          onChange={(e) => setProdForm({ ...prodForm, collectionsText: e.target.value })}
-                        />
-                      </div>
+                    <div className="form-row-2" style={{ alignItems: 'flex-start', margin: '8px 0' }}>
+                      <ImageUploadField
+                        label="Primary Product Image (Choose File from Computer) *"
+                        value={prodForm.image_url}
+                        onChange={(img) => setProdForm({ ...prodForm, image_url: img })}
+                        previewHeight={140}
+                        helpText="Select bottle image file from your device"
+                      />
+                      <ImageUploadField
+                        label="Secondary Flacon / Packaging Image (Optional)"
+                        value={prodForm.image_url_2}
+                        onChange={(img) => setProdForm({ ...prodForm, image_url_2: img })}
+                        previewHeight={140}
+                        helpText="Select hover image or packaging box file"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Collections (comma-separated)</label>
+                      <input
+                        type="text"
+                        placeholder="all, new-in, men, women, sale, gifts"
+                        value={prodForm.collectionsText}
+                        onChange={(e) => setProdForm({ ...prodForm, collectionsText: e.target.value })}
+                      />
                     </div>
                     <div className="form-row-3">
                       <div className="form-group">
@@ -1093,9 +1308,9 @@ export default function AdminDashboard() {
                             >
                               {o.paymentPlatform || (
                                 o.paymentMethod === 'googlepay' ? 'Google Pay' :
-                                o.paymentMethod === 'paypal' ? 'PayPal' :
-                                o.paymentMethod === 'klarna' ? 'Klarna' :
-                                o.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Stripe / Card'
+                                  o.paymentMethod === 'paypal' ? 'PayPal' :
+                                    o.paymentMethod === 'klarna' ? 'Klarna' :
+                                      o.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Stripe / Card'
                               )}
                             </span>
                           </td>
@@ -1123,6 +1338,11 @@ export default function AdminDashboard() {
                   </table>
                 </div>
               </div>
+            )}
+
+            {/* PAGES & NAVIGATION CMS TAB */}
+            {activeTab === 'pages' && (
+              <CmsEditor notify={notify} />
             )}
 
             {/* BLOGS TAB */}
@@ -1365,6 +1585,86 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
+                  <div className="form-divider" style={{ margin: '26px 0 16px', borderTop: '1px solid var(--line)' }} />
+                  <div className="dash-card-head" style={{ padding: 0, marginBottom: 12 }}>
+                    <div>
+                      <span className="eyebrow">Guest / Offline Visitor Modal</span>
+                      <h3>Website Load Offers Pop-up</h3>
+                      <p className="muted small" style={{ margin: 0 }}>
+                        Greets offline / non-signed in guests in the center of the screen on page load. Never shows to logged-in customers or admins.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={contentForm.popupEnabled}
+                        onChange={(e) => setContentForm({ ...contentForm, popupEnabled: e.target.checked })}
+                      />
+                      <strong>Enable Offers Pop-up for Offline (Guest) Visitors</strong>
+                    </label>
+                  </div>
+
+                  <div className="form-row-2">
+                    <div className="form-group">
+                      <label>Pop-up Title / Main Heading</label>
+                      <input
+                        type="text"
+                        value={contentForm.popupTitle}
+                        onChange={(e) => setContentForm({ ...contentForm, popupTitle: e.target.value })}
+                        placeholder="e.g. 10% Off Your First Fragrance"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Pop-up Subtitle / Eyebrow Badge</label>
+                      <input
+                        type="text"
+                        value={contentForm.popupSubtitle}
+                        onChange={(e) => setContentForm({ ...contentForm, popupSubtitle: e.target.value })}
+                        placeholder="e.g. EXCLUSIVE WELCOME PRIVILEGE"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Pop-up Description</label>
+                    <textarea
+                      rows={2}
+                      value={contentForm.popupDescription}
+                      onChange={(e) => setContentForm({ ...contentForm, popupDescription: e.target.value })}
+                      placeholder="e.g. Unlock instant savings across authentic Dubai luxury perfumes, rare artisan oud, and concentrated attars with code PERFUME10."
+                    />
+                  </div>
+
+                  <div className="form-row-2" style={{ alignItems: 'flex-start' }}>
+                    <ImageUploadField
+                      label="Pop-up Promotional Half-Image (Choose File from Computer)"
+                      value={contentForm.popupImage}
+                      onChange={(img) => setContentForm({ ...contentForm, popupImage: img })}
+                      previewHeight={140}
+                      helpText="Choose image file from computer for guest popup"
+                    />
+                    <div className="form-group">
+                      <label>Button Label &amp; Target Link</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
+                        <input
+                          type="text"
+                          value={contentForm.popupCtaText}
+                          onChange={(e) => setContentForm({ ...contentForm, popupCtaText: e.target.value })}
+                          placeholder="Button Text (e.g. Explore Offers)"
+                        />
+                        <input
+                          type="text"
+                          value={contentForm.popupCtaLink}
+                          onChange={(e) => setContentForm({ ...contentForm, popupCtaLink: e.target.value })}
+                          placeholder="Link (e.g. /collections/all)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="form-panel-footer" style={{ justifyContent: 'flex-end' }}>
                     <button type="submit" className="btn">Save Storefront Content</button>
                   </div>
@@ -1556,6 +1856,389 @@ export default function AdminDashboard() {
                               </td>
                             </tr>
                           ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* CATEGORY DISCOUNTS TAB */}
+            {activeTab === 'discounts' && (
+              <div className="dash-stack">
+                <div className="dash-header-bar">
+                  <div>
+                    <span className="eyebrow">Promotions &amp; Offer Engine</span>
+                    <h1>Category Discounts</h1>
+                    <p className="muted" style={{ margin: 0 }}>
+                      Apply flat (£) or percentage (%) discounts by product category, fragrance family, brand, or entire store.
+                    </p>
+                  </div>
+                  <div className="dash-header-actions">
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={openNewDiscount}
+                    >
+                      + Create Discount Rule
+                    </button>
+                  </div>
+                </div>
+
+                {/* Stacking Rule Banner */}
+                <div className="discount-policy-callout">
+                  <span className="policy-icon">🛡️</span>
+                  <div className="policy-text">
+                    <strong>Automatic Checkout Stacking Protection:</strong>
+                    <span> When any product is on promotional category sale, promo coupon code fields are automatically hidden and unapplied at Checkout and Bag, strictly adhering to professional retail standards.</span>
+                  </div>
+                </div>
+
+                {/* Quick Presets Bar */}
+                <div className="dash-card">
+                  <div className="dash-card-head" style={{ marginBottom: 6 }}>
+                    <div>
+                      <h3>Quick Launch Promotional Presets</h3>
+                      <p className="muted small" style={{ margin: 0 }}>Launch popular sales campaigns with a single click or tailor parameters to your need.</p>
+                    </div>
+                  </div>
+                  <div className="discount-presets-grid">
+                    {DISCOUNT_PRESETS.map((p, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        className="preset-chip-btn"
+                        onClick={() => applyDiscountPreset(p)}
+                      >
+                        <span className="chip-badge">{p.type === 'percent' ? `${p.value}% OFF` : `£${p.value} OFF`}</span>
+                        <span className="chip-title">{p.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Add / Edit Form Panel */}
+                {editingDiscount && (
+                  <form ref={discountFormRef} onSubmit={handleSaveDiscount} className="admin-form-panel">
+                    <div className="dash-card-head" style={{ marginBottom: 4, paddingBottom: 12 }}>
+                      <h3>{editingDiscount === 'new' ? 'Create New Category Promotion' : 'Edit Promotion Rule'}</h3>
+                      <button type="button" className="link-inline-btn" onClick={() => setEditingDiscount(null)}>
+                        Cancel
+                      </button>
+                    </div>
+
+                    <div className="form-row-2">
+                      <div className="form-group">
+                        <label>Campaign / Rule Title *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Ramadan Special: 20% Off Men's Fragrances"
+                          value={discountForm.title}
+                          onChange={(e) => setDiscountForm({ ...discountForm, title: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group multi-select-group">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <label style={{ margin: 0 }}>Target Fragrance Category or Brand *</label>
+                          <span className="muted small" style={{ fontSize: '11px' }}>Multiple selection supported</span>
+                        </div>
+
+                        {/* Multi-select dropdown toggle */}
+                        <div className="multi-select-wrapper">
+                          <button
+                            type="button"
+                            className={`multi-select-btn ${catDropdownOpen ? 'open' : ''}`}
+                            onClick={() => setCatDropdownOpen(!catDropdownOpen)}
+                          >
+                            <span className="multi-select-summary">
+                              {selectedDiscountCategories.includes('all')
+                                ? '✨ All Fragrances (Entire Storewide)'
+                                : `${selectedDiscountCategories.length} Categories/Brands selected`}
+                            </span>
+                            <span className="multi-select-arrow">{catDropdownOpen ? '▲' : '▼'}</span>
+                          </button>
+
+                          {catDropdownOpen && (
+                            <div className="multi-select-popover">
+                              <div className="multi-select-search-wrap">
+                                <input
+                                  type="text"
+                                  placeholder="Search categories or brands…"
+                                  value={catSearch}
+                                  onChange={(e) => setCatSearch(e.target.value)}
+                                  autoFocus
+                                  className="multi-select-search-input"
+                                />
+                                <div className="multi-select-quick-actions">
+                                  <button
+                                    type="button"
+                                    className="mini-tag-btn"
+                                    onClick={() => {
+                                      setDiscountForm({ ...discountForm, categories: ['all'], category: 'all' });
+                                    }}
+                                  >
+                                    Storewide (All)
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="mini-tag-btn"
+                                    onClick={() => {
+                                      const allValues = DISCOUNT_CATEGORIES.filter((c) => c.value !== 'all').map((c) => c.value);
+                                      setDiscountForm({ ...discountForm, categories: allValues, category: allValues.join(', ') });
+                                    }}
+                                  >
+                                    Select All
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="mini-tag-btn"
+                                    onClick={() => setCatSearch('')}
+                                  >
+                                    Clear Search
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="multi-select-list">
+                                {filteredDiscountCategories.map((c) => {
+                                  const checked = selectedDiscountCategories.includes(c.value);
+                                  return (
+                                    <label key={c.value} className={`multi-select-row ${checked ? 'selected' : ''}`}>
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={() => handleToggleCategorySelection(c.value)}
+                                      />
+                                      <span className="row-label">{c.label}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="multi-select-footer-bar">
+                                <span className="muted small">
+                                  {selectedDiscountCategories.includes('all') ? 'Storewide' : `${selectedDiscountCategories.length} selected`}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="btn ghost btn-sm"
+                                  onClick={() => setCatDropdownOpen(false)}
+                                >
+                                  Done
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Selected tags list */}
+                        <div className="selected-chips-row">
+                          {selectedDiscountCategories.map((catVal) => {
+                            const found = DISCOUNT_CATEGORIES.find((c) => c.value === catVal);
+                            const label = found ? found.label : catVal;
+                            return (
+                              <span key={catVal} className="category-chip">
+                                <span>{label}</span>
+                                {selectedDiscountCategories.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleCategorySelection(catVal)}
+                                    title={`Remove ${label}`}
+                                    className="chip-remove-btn"
+                                  >
+                                    ×
+                                  </button>
+                                )}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-row-3">
+                      <div className="form-group">
+                        <label>Discount Type *</label>
+                        <select
+                          value={discountForm.type}
+                          onChange={(e) => setDiscountForm({ ...discountForm, type: e.target.value })}
+                        >
+                          <option value="percent">Percentage (% Off)</option>
+                          <option value="flat">Flat Amount (£ Off per item)</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label>{discountForm.type === 'percent' ? 'Discount Percentage (%) *' : 'Flat Reduction (£) *'}</label>
+                        <input
+                          type="number"
+                          step={discountForm.type === 'percent' ? '1' : '0.01'}
+                          min="0.5"
+                          max={discountForm.type === 'percent' ? '90' : '500'}
+                          required
+                          value={discountForm.value}
+                          onChange={(e) => setDiscountForm({ ...discountForm, value: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, marginTop: 18 }}>
+                          <input
+                            type="checkbox"
+                            checked={discountForm.active}
+                            onChange={(e) => setDiscountForm({ ...discountForm, active: e.target.checked })}
+                          />
+                          <span>Activate Promotion Immediately</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Interactive Live Price Simulation */}
+                    {(() => {
+                      const val = Number(discountForm.value) || 0;
+                      const sampleBase = 50.00;
+                      const sampleSaving = discountForm.type === 'percent' ? (sampleBase * val) / 100 : val;
+                      const sampleNew = Math.max(1, Math.round((sampleBase - sampleSaving) * 100) / 100);
+                      const samplePercent = Math.round(((sampleBase - sampleNew) / sampleBase) * 100);
+                      return (
+                        <div className="discount-simulation-box">
+                          <div className="sim-heading">
+                            <span>⚡ Live Storefront Preview (Example £50.00 Perfume)</span>
+                          </div>
+                          <div className="sim-body">
+                            <div className="sim-prices">
+                              <span className="sim-old"><s>{money(sampleBase)}</s></span>
+                              <span className="sim-arrow">→</span>
+                              <strong className="sim-new">{money(sampleNew)}</strong>
+                              <span className="sim-tag">
+                                {discountForm.type === 'percent' ? `-${Math.round(val)}% OFF` : `-£${val.toFixed(2)} FLAT`}
+                              </span>
+                            </div>
+                            <span className="sim-savings">Customer saves <strong>{money(sampleSaving)}</strong> ({samplePercent}% reduction)</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="form-panel-footer">
+                      <button type="submit" className="btn">
+                        {editingDiscount === 'new' ? 'Launch Promotion Rule' : 'Save Changes'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Promotions Table */}
+                <div className="dash-card">
+                  <div className="dash-card-head">
+                    <div>
+                      <span className="eyebrow">Active &amp; Scheduled Offers</span>
+                      <h3>Configured Category Promotions ({discounts.length})</h3>
+                      <p className="muted small" style={{ margin: 0 }}>
+                        {activeDiscountsCount} active discount {activeDiscountsCount === 1 ? 'rule' : 'rules'} currently reducing prices storefront-wide.
+                      </p>
+                    </div>
+                  </div>
+
+                  {discounts.length === 0 ? (
+                    <div className="empty-discounts-state">
+                      <p className="muted">No category discount rules created yet.</p>
+                      <button type="button" className="btn ghost" onClick={openNewDiscount}>
+                        + Create Your First Category Discount
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="admin-table-wrap">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>Status</th>
+                            <th>Campaign Name</th>
+                            <th>Category / Scope</th>
+                            <th>Discount</th>
+                            <th>Created</th>
+                            <th className="th-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {discounts.map((d) => {
+                            const catObj = DISCOUNT_CATEGORIES.find((c) => c.value === d.category);
+                            const catLabel = catObj ? catObj.label : d.category;
+                            return (
+                              <tr key={d.id}>
+                                <td data-label="Status">
+                                  <button
+                                    type="button"
+                                    className={`discount-status-pill ${d.active ? 'active' : 'paused'}`}
+                                    onClick={() => handleToggleDiscount(d.id)}
+                                    title="Click to toggle status"
+                                  >
+                                    <span className="dot" />
+                                    {d.active ? 'Active' : 'Paused'}
+                                  </button>
+                                </td>
+                                <td data-label="Campaign Name">
+                                  <strong>{d.title}</strong>
+                                </td>
+                                <td data-label="Category / Scope">
+                                  <div className="table-cat-badges-wrap">
+                                    {(() => {
+                                      let cats = [];
+                                      if (Array.isArray(d.categories) && d.categories.length) {
+                                        cats = d.categories;
+                                      } else if (d.category) {
+                                        cats = String(d.category).split(',').map((s) => s.trim()).filter(Boolean);
+                                      }
+                                      if (!cats.length) cats = ['all'];
+                                      return cats.map((cVal) => {
+                                        const found = DISCOUNT_CATEGORIES.find((c) => c.value === cVal);
+                                        return (
+                                          <span key={cVal} className="cat-badge">
+                                            {found ? found.label : cVal}
+                                          </span>
+                                        );
+                                      });
+                                    })()}
+                                  </div>
+                                </td>
+                                <td data-label="Discount">
+                                  <span className="disc-val-badge">
+                                    {d.type === 'percent' ? `${d.value}% OFF` : `£${Number(d.value).toFixed(2)} OFF`}
+                                  </span>
+                                </td>
+                                <td data-label="Created">
+                                  {d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-GB') : '—'}
+                                </td>
+                                <td className="td-right" data-label="Actions">
+                                  <div className="table-actions">
+                                    <button
+                                      type="button"
+                                      className="btn ghost btn-sm"
+                                      onClick={() => handleToggleDiscount(d.id)}
+                                    >
+                                      {d.active ? 'Pause' : 'Activate'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn ghost btn-sm"
+                                      onClick={() => openEditDiscount(d)}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn ghost danger-btn btn-sm"
+                                      onClick={() => handleDeleteDiscount(d)}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>

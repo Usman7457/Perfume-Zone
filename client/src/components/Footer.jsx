@@ -1,13 +1,26 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FOOTER } from '../data/nav.js';
-import { subscribe } from '../api.js';
+import { subscribe, getSiteContent } from '../api.js';
 import CountrySelect from './CountrySelect.jsx';
 import { ShieldIcon, TruckIcon, LockIcon } from './Icons.jsx';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
   const [msg, setMsg] = useState('');
+  const [footerData, setFooterData] = useState(() => getSiteContent().footer || {});
+
+  useEffect(() => {
+    const onContentChange = (e) => {
+      if (e.detail?.footer) {
+        setFooterData(e.detail.footer);
+      } else {
+        setFooterData(getSiteContent().footer || {});
+      }
+    };
+    window.addEventListener('pz:content-change', onContentChange);
+    return () => window.removeEventListener('pz:content-change', onContentChange);
+  }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -16,11 +29,20 @@ export default function Footer() {
     if (r.ok) setEmail('');
   };
 
+  const companyLinks = footerData.companyLinks || FOOTER.company.map(([label, to]) => ({ label, to }));
+  const legalLinks = footerData.legalLinks || FOOTER.legal.map(([label, to]) => ({ label, to }));
+  const socialLinks = footerData.socialLinks || [
+    { platform: 'Instagram', url: '#' },
+    { platform: 'TikTok', url: '#' },
+    { platform: 'Facebook', url: '#' },
+    { platform: 'YouTube', url: '#' }
+  ];
+
   return (
     <footer className="footer">
       <section className="newsletter">
-        <h3>Join the Perfume Zone Circle</h3>
-        <p>Subscribe to receive private sale updates, new Arabian fragrance arrivals, and 10% off your first order.</p>
+        <h3>{footerData.newsletterTitle || 'Join the Perfume Zone Circle'}</h3>
+        <p>{footerData.newsletterSubtitle || 'Subscribe to receive private sale updates, new Arabian fragrance arrivals, and 10% off your first order.'}</p>
         <form onSubmit={submit}>
           <input
             type="email"
@@ -60,19 +82,31 @@ export default function Footer() {
 
       <div className="footer-grid">
         <div>
-          <h4>Perfume Zone</h4>
+          <h4>{footerData.companyName || 'Perfume Zone'}</h4>
           <p className="muted">
-            The UK's premier destination for luxurious Arabian perfumes, rare Oud, and artisan Extrait De Parfum.
+            {footerData.aboutText || "The UK's premier destination for luxurious Arabian perfumes, rare Oud, and artisan Extrait De Parfum."}
           </p>
           <p className="footer-contact">
-            <strong>Website:</strong> <a href="https://perfumezone.uk">perfumezone.uk</a><br />
-            <strong>Email:</strong> <a href="mailto:support@perfumezone.uk">support@perfumezone.uk</a>
+            <strong>Website:</strong> <a href={footerData.contactWebsite || 'https://perfumezone.uk'}>{footerData.contactWebsite ? footerData.contactWebsite.replace(/^https?:\/\//, '') : 'perfumezone.uk'}</a><br />
+            <strong>Email:</strong> <a href={`mailto:${footerData.contactEmail || 'support@perfumezone.uk'}`}>{footerData.contactEmail || 'support@perfumezone.uk'}</a>
+            {footerData.contactPhone && (
+              <>
+                <br />
+                <strong>Phone:</strong> <a href={`tel:${footerData.contactPhone.replace(/\s+/g, '')}`}>{footerData.contactPhone}</a>
+              </>
+            )}
           </p>
           <ul className="social">
-            {['Instagram', 'TikTok', 'Facebook', 'YouTube'].map((s) => (
-              <li key={s}>
-                <a href="#" aria-label={s} onClick={(e) => e.preventDefault()}>
-                  {s}
+            {socialLinks.map((s) => (
+              <li key={s.platform || s.url}>
+                <a
+                  href={s.url || '#'}
+                  target={s.url && s.url !== '#' ? '_blank' : undefined}
+                  rel={s.url && s.url !== '#' ? 'noopener noreferrer' : undefined}
+                  aria-label={s.platform}
+                  onClick={(e) => { if (!s.url || s.url === '#') e.preventDefault(); }}
+                >
+                  {s.platform}
                 </a>
               </li>
             ))}
@@ -90,8 +124,8 @@ export default function Footer() {
         <div>
           <h4>Company</h4>
           <ul>
-            {FOOTER.company.map(([l, t]) => (
-              <li key={t}><Link to={t}>{l}</Link></li>
+            {companyLinks.map((item) => (
+              <li key={item.to}><Link to={item.to}>{item.label}</Link></li>
             ))}
           </ul>
         </div>
@@ -99,8 +133,8 @@ export default function Footer() {
         <div>
           <h4>Legal & Policies</h4>
           <ul>
-            {FOOTER.legal.map(([l, t]) => (
-              <li key={t}><Link to={t}>{l}</Link></li>
+            {legalLinks.map((item) => (
+              <li key={item.to}><Link to={item.to}>{item.label}</Link></li>
             ))}
           </ul>
         </div>
@@ -115,6 +149,7 @@ export default function Footer() {
             <span>Mastercard</span>
             <span>Amex</span>
             <span>Apple Pay</span>
+            <span>Google Pay</span>
             <span>PayPal</span>
             <span>Klarna</span>
           </div>
@@ -123,7 +158,7 @@ export default function Footer() {
 
       <div className="footer-bottom">
         <CountrySelect dropUp />
-        <span>© {new Date().getFullYear()} Perfume Zone (<a href="https://perfumezone.uk" className="domain-link">perfumezone.uk</a>). All rights reserved.</span>
+        <span>{footerData.copyrightText || `© ${new Date().getFullYear()} Perfume Zone (perfumezone.uk). All rights reserved.`}</span>
       </div>
     </footer>
   );

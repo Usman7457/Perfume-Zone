@@ -1,141 +1,70 @@
 const c = (t, h) => ({ label: t, to: `/collections/${h}` });
 
-export const NAV = [
+export const BRAND_COLUMNS = [
   {
-    label: 'FRAGRANCE',
-    columns: [
-      {
-        title: 'FEATURED',
-        links: [
-          c('NEW IN', 'new-in'),
-          c('BEST SELLERS', 'best-sellers'),
-          c('FRAGRANCE SETS', 'fragrance-sets'),
-          c('LAST CHANCE', 'last-chance')
-        ]
-      },
-      {
-        title: 'CATEGORIES',
-        links: [
-          c("WOMEN'S", 'womens'),
-          c("MEN'S", 'mens'),
-          c('UNISEX', 'unisex'),
-          c('Extrait De Parfum', 'extrait-de-parfum'),
-          c('PERFUME OILS', 'perfume-oils'),
-          c('DEODORANTS', 'deodorants'),
-          c('AIR FRESHNERS', 'air-freshners')
-        ]
-      },
-      {
-        title: 'FRAGRANCE FAMILY',
-        links: [
-          c('OUD', 'oud-1'),
-          c('AMBER', 'amber'),
-          c('GOURMAND', 'gourmand'),
-          c('WOODY', 'woody'),
-          c('FRUITY', 'fruity-1'),
-          c('FLORAL', 'floral')
-        ]
-      },
-      {
-        title: 'FRAGRANCE WARDROBE',
-        links: [
-          c('SUMMER', 'summer-fragrances'),
-          c('SPRING', 'spring-collection'),
-          c('AUTUMN', 'autumn'),
-          c('WINTER', 'winter'),
-          c('EVERYDAY', 'everyday-fragrances'),
-          c('EVENING', 'evening-fragrances')
-        ]
-      }
-    ],
-    feature: {
-      label: 'Signature Scent: Oud Elixir Dubai Oud Intense',
-      to: '/products/oud-elixir-dubai-oud-intense'
-    }
+    title: 'FEATURED HOUSES',
+    links: [
+      c('AFNAN', 'afnan'),
+      c('AL HARAMAIN', 'al-haramain'),
+      c('ARBIYAT PRESTIGE', 'arbiyat-prestige'),
+      c('ARD AL ZAAFARAN', 'ard-al-zaafaran'),
+      c('ARMAF', 'armaf'),
+      c('BUJAIRAMI', 'bujairami')
+    ]
   },
+  {
+    title: 'ARABIAN ICONS',
+    links: [
+      c('FRAGRANCE WORLD', 'fragrance-world'),
+      c('FRENCH AVENUE', 'french-avenue'),
+      c('KHADLAJ', 'khadlaj'),
+      c('LATTAFA', 'lattafa'),
+      c('MAISON ASRAR', 'maison-asrar'),
+      c('OUD ELIXIR', 'oud-elixir')
+    ]
+  },
+  {
+    title: 'PRESTIGE PERFUMERS',
+    links: [
+      c('PARIS CORNER', 'paris-corner'),
+      c('RASASI', 'rasasi'),
+      c('RAYHAAN', 'rayhaan'),
+      c('SWISS ARABIAN', 'swiss-arabian'),
+      c('ZIMAYA', 'zimaya'),
+      { label: 'VIEW ALL BRANDS →', to: '/collections/all' }
+    ]
+  }
+];
+
+export const BRAND_FEATURE = {
+  label: 'Explore Complete Arabian Collection',
+  to: '/collections/all'
+};
+
+export const NAV = [
+  { label: 'NEW RELEASES', to: '/collections/new-releases' },
+  { label: 'BEST SELLERS', to: '/collections/best-sellers' },
+  { label: 'UNISEX', to: '/collections/unisex-perfume' },
+  { label: 'FOR HIM', to: '/collections/for-him' },
+  { label: 'FOR HER', to: '/collections/for-her' },
   {
     label: 'BRANDS',
-    columns: [
-      {
-        title: 'OUR EXCLUSIVE BRANDS',
-        links: [
-          c('OUD ELIXIR', 'oud-elixir'),
-          c('ESSENTIAL PERFUME', 'essential-perfume'),
-          c('BLENDS OF DUBAI', 'blends-of-dubai'),
-          c('VIALI', 'viali')
-        ]
-      },
-      {
-        title: 'FEATURED HOUSES',
-        links: [
-          c('AFNAN', 'afnan'),
-          c('RAYHAAN', 'rayhaan'),
-          c('SWISS ARABIAN', 'swiss-arabian'),
-          c('GULF ORCHID', 'gulf-orchid'),
-          c('ZIMAYA', 'zimaya'),
-          c('RUE BROCA', 'rue-broca')
-        ]
-      },
-      {
-        title: 'MORE ICONS',
-        links: [
-          c('LATTAFA', 'lattafa'),
-          c('AJMAL', 'ajmal'),
-          c('RASASI', 'rasasi'),
-          c('ARD AL ZAAFARAN', 'ard-al-zaafaran')
-        ]
-      }
-    ],
-    feature: {
-      label: 'Trending House: Lattafa Luxury',
-      to: '/collections/lattafa'
-    }
+    to: '/collections/all',
+    columns: BRAND_COLUMNS,
+    feature: BRAND_FEATURE
   },
-  { label: 'PERFUME OFFERS', to: '/pages/perfume-offers' },
-  {
-    label: 'World of PERFUME ZONE',
-    columns: [
-      {
-        title: 'Our Story',
-        links: [
-          { label: 'About Us', to: '/pages/about-us' },
-          { label: 'Our Partners', to: '/pages/our-partners' },
-          { label: 'Our Creations', to: '/pages/our-creations' }
-        ]
-      },
-      {
-        title: 'Fragrance Insights',
-        links: [
-          { label: 'Fragrance Insights Blog', to: '/blogs/fragrance-insights' },
-          { label: 'The Art of Gifting', to: '/pages/the-art-of-gifting' },
-          { label: 'Frequently Asked Questions', to: '/pages/faqs' }
-        ]
-      },
-      {
-        title: 'Locations & Services',
-        links: [
-          { label: 'Find a Store', to: '/tools/locations' },
-          { label: 'Wholesale B2B', to: '/pages/wholesale' },
-          { label: 'Contact Us', to: '/pages/contact-us' }
-        ]
-      }
-    ],
-    feature: {
-      label: 'Explore UK Boutique Showroom',
-      to: '/tools/locations'
-    }
-  }
+  { label: 'LOCATIONS', to: '/pages/locations' },
+  { label: 'CONTACT US', to: '/pages/contact' }
 ];
 
 export const FOOTER = {
   company: [
     ['About Us', '/pages/about-us'],
-    ['Find a Store', '/tools/locations'],
+    ['Store Locations', '/pages/locations'],
     ['Track Your Order', '/account/track-order'],
     ['Wholesale & B2B', '/pages/wholesale'],
-    ['Contact Us', '/pages/contact-us'],
-    ['FAQ', '/pages/faqs'],
-    ['Fragrance Insights', '/blogs/fragrance-insights']
+    ['Contact Us', '/pages/contact'],
+    ['FAQ', '/pages/faqs']
   ],
   legal: [
     ['Terms & Conditions', '/policies/terms-of-service'],

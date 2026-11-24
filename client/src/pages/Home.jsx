@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { getProducts } from '../api.js';
+import { getProducts, getSiteContent } from '../api.js';
 import Carousel from '../components/Carousel.jsx';
 import ProductCard from '../components/ProductCard.jsx';
 import { TruckIcon, ShieldIcon, LockIcon } from '../components/Icons.jsx';
 
-const HERO = [
+const DEFAULT_HERO = [
   {
     to: '/collections/all',
     title: 'Arabian Luxury & Rare Oud',
@@ -46,15 +46,20 @@ const FAMILIES = [
   { name: 'Sensual Floral', handle: 'floral', img: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=600&q=80' }
 ];
 
-function Hero() {
+function Hero({ slides }) {
   const [i, setI] = useState(0);
+  const heroList = slides && slides.length ? slides : DEFAULT_HERO;
 
   useEffect(() => {
-    const t = setInterval(() => setI((n) => (n + 1) % HERO.length), 6500);
-    return () => clearInterval(t);
-  }, []);
+    if (i >= heroList.length) setI(0);
+  }, [heroList.length, i]);
 
-  const s = HERO[i];
+  useEffect(() => {
+    const t = setInterval(() => setI((n) => (n + 1) % heroList.length), 6500);
+    return () => clearInterval(t);
+  }, [heroList.length]);
+
+  const s = heroList[i] || heroList[0];
 
   return (
     <section className="hero" aria-roledescription="carousel">
@@ -74,8 +79,8 @@ function Hero() {
           <span className="hero-eyebrow">PERFUME ZONE UK</span>
           <h1>{s.title}</h1>
           <p className="hero-subtitle">{s.subtitle}</p>
-          <Link to={s.to} className="btn light hero-cta-btn">
-            {s.cta}
+          <Link to={s.to || s.ctaLink || '/collections/all'} className="btn light hero-cta-btn">
+            {s.cta || s.ctaText || 'Explore All Scents'}
           </Link>
         </div>
       </div>
@@ -83,11 +88,11 @@ function Hero() {
         <button
           type="button"
           aria-label="Previous slide"
-          onClick={() => setI((i + HERO.length - 1) % HERO.length)}
+          onClick={() => setI((i + heroList.length - 1) % heroList.length)}
         >
           ‹
         </button>
-        {HERO.map((_, n) => (
+        {heroList.map((_, n) => (
           <button
             key={n}
             type="button"
@@ -99,7 +104,7 @@ function Hero() {
         <button
           type="button"
           aria-label="Next slide"
-          onClick={() => setI((i + 1) % HERO.length)}
+          onClick={() => setI((i + 1) % heroList.length)}
         >
           ›
         </button>
@@ -110,6 +115,19 @@ function Hero() {
 
 export default function Home() {
   const [items, setItems] = useState([]);
+  const [homeData, setHomeData] = useState(() => getSiteContent().home || {});
+
+  useEffect(() => {
+    const onContentChange = (e) => {
+      if (e.detail?.home) {
+        setHomeData(e.detail.home);
+      } else {
+        setHomeData(getSiteContent().home || {});
+      }
+    };
+    window.addEventListener('pz:content-change', onContentChange);
+    return () => window.removeEventListener('pz:content-change', onContentChange);
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -123,15 +141,18 @@ export default function Home() {
     };
   }, []);
 
+  const middleBanner = homeData.middleBanner || {};
+  const trustBadges = homeData.trustBadges || [];
+
   return (
     <>
-      <Hero />
+      <Hero slides={homeData.heroSlides} />
 
       {/* Featured Collection: New Arrivals */}
       <section className="section">
         <div className="section-head-center">
-          <span className="eyebrow">NEW SEASON ARRIVALS</span>
-          <h2 className="section-title">New In At Perfume Zone</h2>
+          <span className="eyebrow">NEW RELEASES</span>
+          <h2 className="section-title">New Releases &amp; Latest Arrivals</h2>
           <p className="section-sub">
             The freshest creations from the prestigious fragrance laboratories of Dubai and Europe.
           </p>
@@ -150,8 +171,8 @@ export default function Home() {
         </Carousel>
 
         <div className="center">
-          <Link to="/collections/all" className="btn ghost">
-            View All Fragrances
+          <Link to="/collections/new-releases" className="btn ghost">
+            View All New Releases
           </Link>
         </div>
       </section>
@@ -203,16 +224,19 @@ export default function Home() {
       </section>
 
       {/* Special Offer Banner */}
-      <section className="home-promo-banner">
+      <section
+        className="home-promo-banner"
+        style={middleBanner.bg ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.7)), url(${middleBanner.bg})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+      >
         <div className="promo-banner-inner">
           <span className="promo-pill">LIMITED TIME PROMOTION</span>
-          <h2>Experience Arabian Splendour with 10% Off</h2>
+          <h2>{middleBanner.title || 'Experience Arabian Splendour with 10% Off'}</h2>
           <p>
-            Use discount coupon <strong>PERFUME10</strong> at checkout and enjoy complimentary UK Tracked Delivery on all orders over £50.
+            {middleBanner.subtitle || 'Use discount coupon PERFUME10 at checkout and enjoy complimentary UK Tracked Delivery on all orders over £50.'}
           </p>
           <div className="promo-banner-cta">
-            <Link to="/pages/perfume-offers" className="btn light">
-              Discover Exclusive Offers
+            <Link to={middleBanner.to || '/pages/perfume-offers'} className="btn light">
+              {middleBanner.cta || 'Discover Exclusive Offers'}
             </Link>
             <Link to="/collections/all" className="btn ghost light-ghost">
               Explore All Perfumes
@@ -223,21 +247,33 @@ export default function Home() {
 
       {/* Trust USPs */}
       <section className="usps home-usps">
-        <div className="usp-block">
-          <TruckIcon />
-          <strong>FREE UK DELIVERY OVER £50</strong>
-          <span>Royal Mail Tracked 48 &amp; Tracked 24</span>
-        </div>
-        <div className="usp-block">
-          <ShieldIcon />
-          <strong>100% AUTHENTIC GUARANTEE</strong>
-          <span>Direct from official manufacturer sources</span>
-        </div>
-        <div className="usp-block">
-          <LockIcon />
-          <strong>SECURE PAYMENT &amp; SUPPORT</strong>
-          <span>London fragrance concierge team ready to help</span>
-        </div>
+        {trustBadges && trustBadges.length > 0 ? (
+          trustBadges.map((badge, idx) => (
+            <div key={badge.id || idx} className="usp-block">
+              {badge.icon === 'shield' ? <ShieldIcon /> : badge.icon === 'lock' ? <LockIcon /> : <TruckIcon />}
+              <strong>{(badge.title || '').toUpperCase()}</strong>
+              <span>{badge.desc}</span>
+            </div>
+          ))
+        ) : (
+          <>
+            <div className="usp-block">
+              <TruckIcon />
+              <strong>FREE UK DELIVERY OVER £50</strong>
+              <span>Royal Mail Tracked 48 &amp; Tracked 24</span>
+            </div>
+            <div className="usp-block">
+              <ShieldIcon />
+              <strong>100% AUTHENTIC GUARANTEE</strong>
+              <span>Direct from official manufacturer sources</span>
+            </div>
+            <div className="usp-block">
+              <LockIcon />
+              <strong>SECURE PAYMENT &amp; SUPPORT</strong>
+              <span>London fragrance concierge team ready to help</span>
+            </div>
+          </>
+        )}
       </section>
     </>
   );
