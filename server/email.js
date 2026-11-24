@@ -6,10 +6,12 @@ import nodemailer from 'nodemailer';
  */
 export function getMailTransporter() {
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const port = Number(process.env.SMTP_PORT || 587);
+  const port = Number(process.env.SMTP_PORT || 465);
   const secure = process.env.SMTP_SECURE === 'true' || port === 465;
-  const user = process.env.SMTP_USER || 'perfumezone.store.uk@gmail.com';
-  const pass = process.env.SMTP_PASS || 'dummy_gmail_app_password_placeholder';
+  const user = process.env.SMTP_USER || 'usman.nxg@gmail.com';
+  // Strip spaces if user provided Google App Password with spaces (e.g. "abcd efgh ijkl mnop")
+  const rawPass = process.env.SMTP_PASS || '';
+  const pass = rawPass.replace(/\s+/g, '');
 
   return nodemailer.createTransport({
     host,
