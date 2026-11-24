@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getSiteContent, saveSiteContent, resetSiteContent } from '../api.js';
+import { BRAND_COLUMNS, BRAND_FEATURE } from '../data/nav.js';
 import { ShieldIcon, TruckIcon, LockIcon, CheckIcon } from './Icons.jsx';
 import ImageUploadField from './ImageUploadField.jsx';
 
@@ -18,6 +19,7 @@ export default function CmsEditor({ notify }) {
   const [cms, setCms] = useState(() => getSiteContent());
   const [newNavLink, setNewNavLink] = useState({ label: '', to: '' });
   const [newFaqCat, setNewFaqCat] = useState('');
+  const [newBrandInputs, setNewBrandInputs] = useState({});
 
   useEffect(() => {
     const onContentChange = (e) => {
@@ -131,6 +133,187 @@ export default function CmsEditor({ notify }) {
     setCms({ ...cms, headerNav: nav });
     setNewNavLink({ label: '', to: '' });
     notify?.(`Added "${newNavLink.label}" to navigation links.`);
+  };
+
+  // ----------------------------------------------------
+  // Brands Mega Dropdown (Columns & Brand Options) Helpers
+  // ----------------------------------------------------
+  const getBrandsNavIndex = () => {
+    return (cms.headerNav || []).findIndex(
+      (n) => n.label?.toUpperCase() === 'BRANDS' || (Array.isArray(n.columns) && n.columns.length > 0)
+    );
+  };
+
+  const getBrandColumns = () => {
+    const idx = getBrandsNavIndex();
+    if (idx >= 0 && Array.isArray(cms.headerNav[idx]?.columns) && cms.headerNav[idx].columns.length > 0) {
+      return cms.headerNav[idx].columns;
+    }
+    return BRAND_COLUMNS;
+  };
+
+  const getBrandFeature = () => {
+    const idx = getBrandsNavIndex();
+    if (idx >= 0 && cms.headerNav[idx]?.feature) {
+      return cms.headerNav[idx].feature;
+    }
+    return BRAND_FEATURE;
+  };
+
+  const updateBrandColumnTitle = (colIdx, title) => {
+    const nav = [...(cms.headerNav || [])];
+    const idx = getBrandsNavIndex();
+    if (idx === -1) return;
+    const currentItem = { ...nav[idx] };
+    const columns = [...(currentItem.columns || BRAND_COLUMNS)].map((c) => ({
+      ...c,
+      links: [...(c.links || [])]
+    }));
+    if (!columns[colIdx]) return;
+    columns[colIdx].title = title;
+    currentItem.columns = columns;
+    nav[idx] = currentItem;
+    setCms({ ...cms, headerNav: nav });
+  };
+
+  const updateBrandLink = (colIdx, linkIdx, field, val) => {
+    const nav = [...(cms.headerNav || [])];
+    const idx = getBrandsNavIndex();
+    if (idx === -1) return;
+    const currentItem = { ...nav[idx] };
+    const columns = [...(currentItem.columns || BRAND_COLUMNS)].map((c) => ({
+      ...c,
+      links: [...(c.links || [])]
+    }));
+    if (!columns[colIdx] || !columns[colIdx].links[linkIdx]) return;
+    columns[colIdx].links[linkIdx] = {
+      ...columns[colIdx].links[linkIdx],
+      [field]: val
+    };
+    currentItem.columns = columns;
+    nav[idx] = currentItem;
+    setCms({ ...cms, headerNav: nav });
+  };
+
+  const deleteBrandLink = (colIdx, linkIdx) => {
+    const nav = [...(cms.headerNav || [])];
+    const idx = getBrandsNavIndex();
+    if (idx === -1) return;
+    const currentItem = { ...nav[idx] };
+    const columns = [...(currentItem.columns || BRAND_COLUMNS)].map((c) => ({
+      ...c,
+      links: [...(c.links || [])]
+    }));
+    if (!columns[colIdx]) return;
+    const removedName = columns[colIdx].links[linkIdx]?.label || 'Brand';
+    columns[colIdx].links = columns[colIdx].links.filter((_, i) => i !== linkIdx);
+    currentItem.columns = columns;
+    nav[idx] = currentItem;
+    setCms({ ...cms, headerNav: nav });
+    notify?.(`Deleted brand "${removedName}" from ${columns[colIdx].title}.`);
+  };
+
+  const addBrandLink = (colIdx, label, to) => {
+    if (!label.trim()) return;
+    const nav = [...(cms.headerNav || [])];
+    const idx = getBrandsNavIndex();
+    if (idx === -1) return;
+    const currentItem = { ...nav[idx] };
+    const columns = [...(currentItem.columns || BRAND_COLUMNS)].map((c) => ({
+      ...c,
+      links: [...(c.links || [])]
+    }));
+    if (!columns[colIdx]) return;
+    const slug = label
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    const finalTo = to.trim() || `/collections/${slug}`;
+    columns[colIdx].links.push({
+      label: label.trim().toUpperCase(),
+      to: finalTo
+    });
+    currentItem.columns = columns;
+    nav[idx] = currentItem;
+    setCms({ ...cms, headerNav: nav });
+    notify?.(`Added "${label.trim().toUpperCase()}" to ${columns[colIdx].title}.`);
+  };
+
+  const addBrandColumn = (title) => {
+    const nav = [...(cms.headerNav || [])];
+    const idx = getBrandsNavIndex();
+    if (idx === -1) return;
+    const currentItem = { ...nav[idx] };
+    const columns = [...(currentItem.columns || BRAND_COLUMNS)].map((c) => ({
+      ...c,
+      links: [...(c.links || [])]
+    }));
+    const colTitle = (title || 'NEW PERFUME HOUSES').trim().toUpperCase();
+    columns.push({
+      title: colTitle,
+      links: []
+    });
+    currentItem.columns = columns;
+    nav[idx] = currentItem;
+    setCms({ ...cms, headerNav: nav });
+    notify?.(`Added new brand column "${colTitle}".`);
+  };
+
+  const deleteBrandColumn = (colIdx) => {
+    const nav = [...(cms.headerNav || [])];
+    const idx = getBrandsNavIndex();
+    if (idx === -1) return;
+    const currentItem = { ...nav[idx] };
+    const columns = [...(currentItem.columns || BRAND_COLUMNS)].map((c) => ({
+      ...c,
+      links: [...(c.links || [])]
+    }));
+    if (columns.length <= 1) {
+      alert('You must have at least one brand column in the dropdown.');
+      return;
+    }
+    const colTitle = columns[colIdx]?.title || 'Column';
+    if (!window.confirm(`Are you sure you want to delete column "${colTitle}" and all its brand options?`)) {
+      return;
+    }
+    currentItem.columns = columns.filter((_, i) => i !== colIdx);
+    nav[idx] = currentItem;
+    setCms({ ...cms, headerNav: nav });
+    notify?.(`Deleted column "${colTitle}".`);
+  };
+
+  const updateBrandFeature = (field, val) => {
+    const nav = [...(cms.headerNav || [])];
+    const idx = getBrandsNavIndex();
+    if (idx === -1) return;
+    const currentItem = { ...nav[idx] };
+    currentItem.feature = {
+      ...(currentItem.feature || BRAND_FEATURE),
+      [field]: val
+    };
+    nav[idx] = currentItem;
+    setCms({ ...cms, headerNav: nav });
+  };
+
+  const handleNewBrandChange = (colIdx, field, val) => {
+    setNewBrandInputs((prev) => ({
+      ...prev,
+      [colIdx]: {
+        ...(prev[colIdx] || { label: '', to: '' }),
+        [field]: val
+      }
+    }));
+  };
+
+  const submitAddBrand = (colIdx) => {
+    const current = newBrandInputs[colIdx] || {};
+    if (!current.label || !current.label.trim()) return;
+    addBrandLink(colIdx, current.label, current.to || '');
+    setNewBrandInputs((prev) => ({
+      ...prev,
+      [colIdx]: { label: '', to: '' }
+    }));
   };
 
   // ----------------------------------------------------
@@ -702,6 +885,183 @@ export default function CmsEditor({ notify }) {
                 onClick={() => saveSection('headerNav', 'Navigation Links')}
               >
                 Save Navigation Links
+              </button>
+            </div>
+          </div>
+
+          {/* BRANDS MEGA DROPDOWN OPTIONS MANAGER */}
+          <div className="dash-card cms-brands-editor-card" style={{ marginTop: 24 }}>
+            <div className="dash-card-head">
+              <div>
+                <span className="eyebrow">Mega Dropdown Navigation</span>
+                <h3>🏢 BRANDS Dropdown Sub-Categories &amp; Brand Options</h3>
+                <p className="muted small" style={{ margin: 0 }}>
+                  Manage the dropdown columns (houses) and individual brand links in the BRANDS navbar dropdown. Add new brands, edit brand names/URLs, or delete options anytime.
+                </p>
+              </div>
+              <div className="dash-card-actions">
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => {
+                    const title = prompt('Enter title for new brand column (e.g. NICHE ARTISANS):');
+                    if (title && title.trim()) addBrandColumn(title.trim());
+                  }}
+                >
+                  + Add New Brand Column
+                </button>
+              </div>
+            </div>
+
+            {/* Columns Grid */}
+            <div className="cms-brands-columns-grid">
+              {getBrandColumns().map((col, colIdx) => {
+                const inputState = newBrandInputs[colIdx] || { label: '', to: '' };
+                return (
+                  <div key={colIdx} className="cms-brand-col-card">
+                    <div className="cms-brand-col-header">
+                      <div className="cms-brand-col-title-wrap">
+                        <span className="cms-badge">Col #{colIdx + 1}</span>
+                        <input
+                          type="text"
+                          className="cms-brand-col-title-input"
+                          value={col.title || ''}
+                          onChange={(e) => updateBrandColumnTitle(colIdx, e.target.value)}
+                          placeholder="Column Title (e.g. FEATURED HOUSES)"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="link-inline-btn danger"
+                        onClick={() => deleteBrandColumn(colIdx)}
+                        title="Delete this entire column"
+                      >
+                        Delete
+                      </button>
+                    </div>
+
+                    {/* Brand Links in this Column */}
+                    <div className="cms-brand-items-list">
+                      {(col.links || []).length === 0 ? (
+                        <div className="cms-empty-brands-msg">
+                          No brand options in this column yet. Use the form below to add one.
+                        </div>
+                      ) : (
+                        (col.links || []).map((link, linkIdx) => (
+                          <div key={linkIdx} className="cms-brand-item-row">
+                            <div className="cms-brand-item-fields">
+                              <input
+                                type="text"
+                                className="cms-inline-input brand-name-input"
+                                value={link.label || ''}
+                                onChange={(e) => updateBrandLink(colIdx, linkIdx, 'label', e.target.value)}
+                                placeholder="Brand Name"
+                                title="Brand Name"
+                              />
+                              <input
+                                type="text"
+                                className="cms-inline-input brand-url-input"
+                                value={link.to || ''}
+                                onChange={(e) => updateBrandLink(colIdx, linkIdx, 'to', e.target.value)}
+                                placeholder="Target Route (e.g. /collections/afnan)"
+                                title="Target Route URL"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              className="cms-item-delete-btn"
+                              onClick={() => deleteBrandLink(colIdx, linkIdx)}
+                              title={`Delete ${link.label || 'Brand'}`}
+                              aria-label={`Delete ${link.label || 'Brand'}`}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Quick Add Brand to this Column */}
+                    <div className="cms-brand-add-box">
+                      <span className="cms-brand-add-title">
+                        + Add Brand Option to {col.title || `Column #${colIdx + 1}`}
+                      </span>
+                      <div className="cms-brand-add-inputs">
+                        <input
+                          type="text"
+                          placeholder="Brand Name (e.g. AJMAL)"
+                          value={inputState.label || ''}
+                          onChange={(e) => handleNewBrandChange(colIdx, 'label', e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              submitAddBrand(colIdx);
+                            }
+                          }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Route (optional, auto-generated if blank)"
+                          value={inputState.to || ''}
+                          onChange={(e) => handleNewBrandChange(colIdx, 'to', e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              submitAddBrand(colIdx);
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={() => submitAddBrand(colIdx)}
+                          disabled={!inputState.label?.trim()}
+                        >
+                          Add Brand
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Mega Menu Feature Box */}
+            <div className="cms-brand-feature-card" style={{ marginTop: 20 }}>
+              <h4>Dropdown Promotional Feature Link</h4>
+              <p className="muted small" style={{ margin: '0 0 12px 0' }}>
+                Featured banner link showcased inside the BRANDS mega dropdown on desktop.
+              </p>
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label>Feature Callout Label</label>
+                  <input
+                    type="text"
+                    value={getBrandFeature().label || ''}
+                    onChange={(e) => updateBrandFeature('label', e.target.value)}
+                    placeholder="e.g. Explore Complete Arabian Collection"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Feature Target Route</label>
+                  <input
+                    type="text"
+                    value={getBrandFeature().to || ''}
+                    onChange={(e) => updateBrandFeature('to', e.target.value)}
+                    placeholder="e.g. /collections/all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Save All Navigation & Brands Button */}
+            <div className="form-panel-footer" style={{ marginTop: 24 }}>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => saveSection('headerNav', 'Navigation Links & BRANDS Dropdown')}
+              >
+                Save Navigation Links &amp; BRANDS Dropdown Changes
               </button>
             </div>
           </div>

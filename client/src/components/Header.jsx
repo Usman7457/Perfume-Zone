@@ -12,7 +12,10 @@ const ensureColumns = (list) => {
   if (!Array.isArray(list) || !list.length) return NAV;
   return list.map((item) => {
     if (item.columns && Array.isArray(item.columns) && item.columns.length > 0) {
-      return item;
+      return {
+        ...item,
+        feature: item.feature || BRAND_FEATURE
+      };
     }
     if (item.label?.toUpperCase() === 'BRANDS' || item.to === '/collections/all') {
       return { ...item, columns: BRAND_COLUMNS, feature: BRAND_FEATURE };
