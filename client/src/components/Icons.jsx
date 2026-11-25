@@ -35,3 +35,31 @@ export const TagIcon = (props) => (
     <line x1="7" y1="7" x2="7.01" y2="7" />
   </svg>
 );
+
+export const InstagramIcon = (props) => (
+  <svg {...P} width={18} height={18} {...props}>
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+  </svg>
+);
+
+export const LinkedInIcon = (props) => (
+  <svg {...P} width={18} height={18} {...props}>
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+    <rect x="2" y="9" width="4" height="12" />
+    <circle cx="4" cy="4" r="2" />
+  </svg>
+);
+
+export const FacebookIcon = (props) => (
+  <svg {...P} width={18} height={18} {...props}>
+    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+  </svg>
+);
+
+export const TikTokIcon = (props) => (
+  <svg {...P} width={18} height={18} {...props}>
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+  </svg>
+);

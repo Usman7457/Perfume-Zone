@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckIcon, ShieldIcon } from '../components/Icons.jsx';
-import { getSiteContent } from '../api.js';
+import { getSiteContent, submitWholesaleInquiry } from '../api.js';
 
 export default function Wholesale() {
   const [form, setForm] = useState({
@@ -14,6 +14,8 @@ export default function Wholesale() {
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [wholesaleData, setWholesaleData] = useState(() => getSiteContent().wholesale || {});
 
   useEffect(() => {
@@ -24,9 +26,17 @@ export default function Wholesale() {
     return () => window.removeEventListener('pz:content-change', onContentChange);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setErrorMsg('');
+    setSubmitting(true);
+    const res = await submitWholesaleInquiry(form);
+    setSubmitting(false);
+    if (res.ok) {
+      setSubmitted(true);
+    } else {
+      setErrorMsg(res.error || 'Failed to submit trade application. Please try again or email wholesale@perfumezone.uk.');
+    }
   };
 
   const benefits = wholesaleData.benefits || [];
@@ -111,7 +121,7 @@ export default function Wholesale() {
 
             <div className="form-row two-cols">
               <div className="form-group">
-                <label>Business Website / Social Storefront</label>
+                <label>Business Website / Social Storefront <span className="muted small">(Optional)</span></label>
                 <input
                   placeholder="https://yourstore.co.uk"
                   value={form.website}
@@ -119,7 +129,7 @@ export default function Wholesale() {
                 />
               </div>
               <div className="form-group">
-                <label>Anticipated Initial Order Budget</label>
+                <label>Anticipated Initial Order Budget <span className="muted small">(Optional)</span></label>
                 <select
                   value={form.estimatedOrderValue}
                   onChange={(e) => setForm({ ...form, estimatedOrderValue: e.target.value })}
@@ -133,7 +143,7 @@ export default function Wholesale() {
             </div>
 
             <div className="form-group">
-              <label>Brands or Fragrance Families of Interest</label>
+              <label>Brands or Fragrance Families of Interest <span className="muted small">(Optional)</span></label>
               <textarea
                 rows="4"
                 placeholder="Tell us which perfume brands (e.g. Afnan, Lattafa, Swiss Arabian, Oud Elixir) or product types (Extrait, EDP, Oils) you are looking to stock..."
@@ -142,8 +152,14 @@ export default function Wholesale() {
               />
             </div>
 
-            <button type="submit" className="btn wide">
-              Submit Trade Application
+            {errorMsg && (
+              <div style={{ color: '#dc2626', fontSize: '13px', background: '#fee2e2', padding: '10px 14px', borderRadius: '4px' }}>
+                {errorMsg}
+              </div>
+            )}
+
+            <button type="submit" className="btn wide" disabled={submitting}>
+              {submitting ? 'Submitting Application…' : 'Submit Trade Application'}
             </button>
           </form>
         )}

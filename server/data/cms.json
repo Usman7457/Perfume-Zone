@@ -192,9 +192,9 @@
   "contact": {
     "pageTitle": "Contact Perfume Zone",
     "pageSubtitle": "Our dedicated fragrance concierge team is here to assist you with order inquiries, bespoke scent consultations, and wholesale partnerships.",
-    "showroomName": "London Boutique & Showroom",
-    "address": "Perfume Zone UK\n48 Mayfair Luxury Lane\nLondon, W1K 2PB\nUnited Kingdom",
-    "hours": "Monday – Saturday: 10:00 AM – 7:00 PM\nSunday: 12:00 PM – 6:00 PM",
+    "showroomName": "Perfume Zone Southampton Store",
+    "address": "Perfume Zone\nUnit 38 Marlands Shopping Centre\nCivic Centre Road\nSouthampton\nSO14 7SJ\nUnited Kingdom",
+    "hours": "Monday – Saturday: 09:30 AM – 5:30 PM\nSunday: 11:00 AM – 5:00 PM",
     "email": "support@perfumezone.uk",
     "wholesaleEmail": "wholesale@perfumezone.uk",
     "phone": "+44 (0) 20 7946 0991",
@@ -346,19 +346,19 @@
     "socialLinks": [
       {
         "platform": "Instagram",
-        "url": "https://instagram.com"
+        "url": "https://instagram.com/perfume_zone21"
+      },
+      {
+        "platform": "LinkedIn",
+        "url": "https://www.linkedin.com/in/perfume-zone-b0b687443"
       },
       {
         "platform": "TikTok",
-        "url": "https://tiktok.com"
+        "url": "https://www.tiktok.com/@user8350399294532"
       },
       {
         "platform": "Facebook",
-        "url": "https://facebook.com"
-      },
-      {
-        "platform": "YouTube",
-        "url": "https://youtube.com"
+        "url": "https://www.facebook.com/perfumezonesouthampton"
       }
     ],
     "companyLinks": [

@@ -120,11 +120,12 @@ export default function Collection() {
 
         <div className="toolbar-controls">
           {/* Brand Filter */}
-          <label className="toolbar-filter-item">
-            <span>Brand:</span>
+          <label className="toolbar-filter-item toolbar-brand-filter">
+            <span className="toolbar-filter-label">Brand:</span>
             <select
               value={brandFilter}
               onChange={(e) => handleBrandChange(e.target.value)}
+              aria-label="Filter fragrances by brand"
             >
               <option value="">All Brands</option>
               <option value="Afnan">Afnan</option>
@@ -145,11 +146,12 @@ export default function Collection() {
           </label>
 
           {/* Sort By */}
-          <label className="toolbar-filter-item">
-            <span>Sort by:</span>
+          <label className="toolbar-filter-item toolbar-sort-filter">
+            <span className="toolbar-filter-label">Sort:</span>
             <select
               value={sort}
               onChange={(e) => handleSortChange(e.target.value)}
+              aria-label="Sort fragrances by"
             >
               <option value="manual">Featured</option>
               <option value="price-ascending">Price: Low to High</option>

@@ -3748,12 +3748,94 @@ ul {
   font-size: 13px;
 }
 
+.toolbar-filter-label {
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
 .toolbar-filter-item select {
   padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   font: inherit;
   background: #fff;
+}
+
+/* Mobile Brand & Sort By in a Single Row */
+@media (max-width: 768px) {
+  .collection-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px 0;
+    margin-bottom: 20px;
+  }
+
+  .collection-toolbar .toolbar-left {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .collection-toolbar .toolbar-controls {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .collection-toolbar .toolbar-filter-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  .collection-toolbar .toolbar-filter-label {
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    color: var(--muted) !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  .collection-toolbar .toolbar-filter-item select {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 8px 6px !important;
+    font-size: 12px !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    background: #fff !important;
+    border: 1px solid var(--line) !important;
+    border-radius: var(--radius) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .collection-toolbar .toolbar-controls {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
+
+  .collection-toolbar .toolbar-filter-item {
+    gap: 4px !important;
+  }
+
+  .collection-toolbar .toolbar-filter-label {
+    font-size: 10.5px !important;
+  }
+
+  .collection-toolbar .toolbar-filter-item select {
+    padding: 7px 4px !important;
+    font-size: 11px !important;
+  }
 }
 
 .load-more-wrapper {
@@ -3928,14 +4010,16 @@ ul {
 }
 
 /* Stores Page */
-.stores {
+.stores,
+.stores-single-layout {
   display: grid;
   gap: 32px;
 }
 
 @media (min-width: 900px) {
-  .stores {
-    grid-template-columns: 1.3fr 1fr;
+  .stores,
+  .stores-single-layout {
+    grid-template-columns: 1.4fr 1fr;
     align-items: start;
   }
 }
@@ -3952,6 +4036,183 @@ ul {
   padding: 24px;
   display: flex;
   gap: 18px;
+}
+
+.store-card-hero {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.store-badge-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.store-info-content h2 {
+  font-size: 1.6rem;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.store-full-address {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.store-full-address p {
+  margin: 0;
+}
+
+.store-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  background: #faf9f6;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.store-meta-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.store-meta-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.store-action-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+/* Boutique Gallery Showcase */
+.store-gallery-section {
+  margin-top: 28px;
+}
+
+.store-gallery-head h3 {
+  font-size: 1.25rem;
+  margin: 0 0 4px;
+}
+
+.store-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.store-gallery-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.store-gallery-img-wrap {
+  width: 100%;
+  height: 150px;
+  background: #111;
+  overflow: hidden;
+}
+
+.store-gallery-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.store-gallery-card:hover .store-gallery-img-wrap img {
+  transform: scale(1.05);
+}
+
+.store-gallery-caption {
+  padding: 10px 12px;
+}
+
+.store-gallery-caption h4 {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: var(--ink);
+}
+
+.store-gallery-caption p {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+  margin: 0;
+}
+
+.store-perks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  margin-top: 16px;
+}
+
+.perk-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.perk-item svg {
+  width: 16px;
+  height: 16px;
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.store-consult-box {
+  background: #faf8f5;
+  border: 1px solid #e7d8bf;
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.store-consult-box svg {
+  width: 32px;
+  height: 32px;
+  color: var(--gold);
+  margin: 0 auto 8px;
+}
+
+.store-consult-box h4 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
 }
 
 .store-pin-badge svg {
@@ -4246,9 +4507,37 @@ ul {
 
 .social {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   flex-wrap: wrap;
   margin: 0 0 14px;
+}
+
+.social-pill-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #f3f4f6 !important;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.social-pill-link:hover {
+  background: var(--gold) !important;
+  color: #111 !important;
+  border-color: var(--gold) !important;
+  transform: translateY(-1px);
+}
+
+.social-pill-link svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 .trust {

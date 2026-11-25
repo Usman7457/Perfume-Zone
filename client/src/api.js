@@ -826,6 +826,50 @@ export const subscribe = async (email, source = 'footer') => {
   }
 };
 
+export const submitContactInquiry = async (formData) => {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, error: data.error || 'Failed to submit inquiry' };
+    }
+    return { ok: true, data };
+  } catch (err) {
+    console.warn('API contact submit offline, simulated successfully:', err.message);
+    return { ok: true, simulated: true };
+  }
+};
+
+export const submitWholesaleInquiry = async (formData) => {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch('/api/wholesale', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, error: data.error || 'Failed to submit trade application' };
+    }
+    return { ok: true, data };
+  } catch (err) {
+    console.warn('API wholesale submit offline, simulated successfully:', err.message);
+    return { ok: true, simulated: true };
+  }
+};
+
 export const getSubscribersAdmin = async () => {
   const localSubs = readSubscribersLocal();
   if (shouldTryApi()) {

@@ -5,7 +5,12 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
-import { sendOrderConfirmationEmail } from './email.js';
+import {
+  sendOrderConfirmationEmail,
+  sendContactInquiryEmail,
+  sendNewsletterSubscriptionEmail,
+  sendWholesaleInquiryEmail
+} from './email.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
@@ -15,6 +20,8 @@ const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const SUBSCRIBERS_FILE = path.join(DATA_DIR, 'subscribers.json');
 const CMS_FILE = path.join(DATA_DIR, 'cms.json');
+const CONTACTS_FILE = path.join(DATA_DIR, 'contacts.json');
+const WHOLESALE_FILE = path.join(DATA_DIR, 'wholesale.json');
 
 function readJsonFile(filePath, fallback = []) {
   try {
@@ -1635,6 +1642,12 @@ app.post(
       syncSubscribersFile();
     }
 
+    // Dispatch newsletter subscription email notification to store owner (usman.nxg@gmail.com)
+    // and welcome voucher copy to new subscriber
+    sendNewsletterSubscriptionEmail({ email, source }).catch((err) => {
+      console.warn('[Newsletter Email Error]', err.message);
+    });
+
     if (isDbConnected) {
       try {
         const subRes = await pool.query(
@@ -1654,6 +1667,103 @@ app.post(
     }
 
     res.json({ ok: true, storage: 'file-json' });
+  })
+);
+
+// POST /api/contact
+app.post(
+  '/api/contact',
+  wrap(async (req, res) => {
+    const name = String(req.body.name || '').trim();
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const phone = String(req.body.phone || '').trim();
+    const subject = String(req.body.subject || 'General Inquiry').trim();
+    const message = String(req.body.message || '').trim();
+
+    // Mandatory validation
+    if (!name) {
+      return res.status(400).json({ error: 'Please provide your full name' });
+    }
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ error: 'Please provide a valid email address' });
+    }
+    if (!message) {
+      return res.status(400).json({ error: 'Please enter your message or inquiry' });
+    }
+
+    const inquiry = {
+      id: `CNT-${Date.now()}`,
+      name,
+      email,
+      phone: phone || null,
+      subject,
+      message,
+      createdAt: new Date().toISOString()
+    };
+
+    const existingContacts = readJsonFile(CONTACTS_FILE, []);
+    existingContacts.unshift(inquiry);
+    writeJsonFile(CONTACTS_FILE, existingContacts);
+
+    // Dispatch email notification to store owner (usman.nxg@gmail.com)
+    sendContactInquiryEmail(inquiry).catch((err) => {
+      console.warn('[Contact Email Error]', err.message);
+    });
+
+    res.status(201).json({ ok: true, id: inquiry.id, message: 'Your message has been sent successfully.' });
+  })
+);
+
+// POST /api/wholesale
+app.post(
+  '/api/wholesale',
+  wrap(async (req, res) => {
+    const businessName = String(req.body.businessName || '').trim();
+    const contactName = String(req.body.contactName || '').trim();
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const phone = String(req.body.phone || '').trim();
+    const website = String(req.body.website || '').trim();
+    const country = String(req.body.country || 'United Kingdom').trim();
+    const estimatedOrderValue = String(req.body.estimatedOrderValue || '').trim();
+    const message = String(req.body.message || '').trim();
+
+    // Mandatory validation
+    if (!businessName) {
+      return res.status(400).json({ error: 'Please provide your company or registered business name' });
+    }
+    if (!contactName) {
+      return res.status(400).json({ error: 'Please provide a contact person name' });
+    }
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ error: 'Please provide a valid business email address' });
+    }
+    if (!phone) {
+      return res.status(400).json({ error: 'Please provide a contact telephone number for trade verification' });
+    }
+
+    const application = {
+      id: `WHL-${Date.now()}`,
+      businessName,
+      contactName,
+      email,
+      phone,
+      website: website || null,
+      country: country || 'United Kingdom',
+      estimatedOrderValue: estimatedOrderValue || null,
+      message: message || null,
+      createdAt: new Date().toISOString()
+    };
+
+    const existingWholesale = readJsonFile(WHOLESALE_FILE, []);
+    existingWholesale.unshift(application);
+    writeJsonFile(WHOLESALE_FILE, existingWholesale);
+
+    // Dispatch email notification to store owner (usman.nxg@gmail.com)
+    sendWholesaleInquiryEmail(application).catch((err) => {
+      console.warn('[Wholesale Email Error]', err.message);
+    });
+
+    res.status(201).json({ ok: true, id: application.id, message: 'Trade application received successfully.' });
   })
 );
 

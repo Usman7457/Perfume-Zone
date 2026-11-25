@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { PinIcon, CheckIcon } from '../components/Icons.jsx';
-import { getSiteContent } from '../api.js';
+import { getSiteContent, submitContactInquiry } from '../api.js';
 
 export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', subject: 'Customer Service', message: '', phone: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [contactData, setContactData] = useState(() => getSiteContent().contact || {});
 
   useEffect(() => {
@@ -15,9 +17,17 @@ export default function Contact() {
     return () => window.removeEventListener('pz:content-change', onContentChange);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setErrorMsg('');
+    setSubmitting(true);
+    const res = await submitContactInquiry(form);
+    setSubmitting(false);
+    if (res.ok) {
+      setSubmitted(true);
+    } else {
+      setErrorMsg(res.error || 'Failed to send your message. Please try again or email us directly.');
+    }
   };
 
   return (
@@ -33,13 +43,13 @@ export default function Contact() {
         {/* Contact Info Cards */}
         <div className="contact-info-column">
           <div className="info-card">
-            <h3>{contactData.showroomName || 'London Boutique & Showroom'}</h3>
+            <h3>{contactData.showroomName || 'Southampton Boutique & Showroom'}</h3>
             <p className="address-lines" style={{ whiteSpace: 'pre-line' }}>
-              {contactData.address || 'Perfume Zone UK\n48 Mayfair Luxury Lane\nLondon, W1K 2PB\nUnited Kingdom'}
+              {contactData.address || 'Perfume Zone\nUnit 38 Marlands Shopping Centre\nCivic Centre Road\nSouthampton\nSO14 7SJ\nUnited Kingdom'}
             </p>
             <p className="hours-lines muted" style={{ whiteSpace: 'pre-line', marginTop: 14 }}>
               <strong>Showroom Hours:</strong><br />
-              {contactData.hours || 'Monday – Saturday: 10:00 AM – 7:00 PM\nSunday: 12:00 PM – 6:00 PM'}
+              {contactData.hours || 'Monday – Saturday: 09:30 AM – 5:30 PM\nSunday: 11:00 AM – 5:00 PM'}
             </p>
           </div>
 
@@ -129,7 +139,7 @@ export default function Contact() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="contact-phone">Phone Number</label>
+                    <label htmlFor="contact-phone">Phone Number <span className="muted small">(Optional)</span></label>
                     <input
                       id="contact-phone"
                       type="tel"
@@ -167,8 +177,14 @@ export default function Contact() {
                   />
                 </div>
 
-                <button type="submit" className="btn wide">
-                  Send Inquiry
+                {errorMsg && (
+                  <div style={{ color: '#dc2626', fontSize: '13px', background: '#fee2e2', padding: '10px 14px', borderRadius: '4px' }}>
+                    {errorMsg}
+                  </div>
+                )}
+
+                <button type="submit" className="btn wide" disabled={submitting}>
+                  {submitting ? 'Sending Inquiry…' : 'Send Inquiry'}
                 </button>
               </form>
             )}

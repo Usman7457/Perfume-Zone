@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getSiteContent, saveSiteContent, resetSiteContent } from '../api.js';
 import { BRAND_COLUMNS, BRAND_FEATURE } from '../data/nav.js';
-import { ShieldIcon, TruckIcon, LockIcon, CheckIcon } from './Icons.jsx';
+import { ShieldIcon, TruckIcon, LockIcon, CheckIcon, InstagramIcon, LinkedInIcon, FacebookIcon, TikTokIcon } from './Icons.jsx';
 import ImageUploadField from './ImageUploadField.jsx';
 
 const SUB_TABS = [
@@ -343,6 +343,20 @@ export default function CmsEditor({ notify }) {
   const deleteFooterLink = (listKey, idx) => {
     const list = (cms.footer?.[listKey] || []).filter((_, i) => i !== idx);
     setCms({ ...cms, footer: { ...cms.footer, [listKey]: list } });
+  };
+
+  const updateSocialLink = (idx, field, val) => {
+    const currentList = Array.isArray(cms.footer?.socialLinks) && cms.footer.socialLinks.length > 0
+      ? cms.footer.socialLinks
+      : [
+          { platform: 'Instagram', url: 'https://instagram.com/perfume_zone21', handle: '@perfume_zone21' },
+          { platform: 'LinkedIn', url: 'https://www.linkedin.com/in/perfume-zone-b0b687443', handle: 'perfume-zone' },
+          { platform: 'TikTok', url: 'https://www.tiktok.com/@user8350399294532', handle: '@user8350399294532' },
+          { platform: 'Facebook', url: 'https://www.facebook.com/perfumezonesouthampton', handle: 'perfumezonesouthampton' }
+        ];
+    const list = [...currentList];
+    list[idx] = { ...list[idx], [field]: val };
+    setCms({ ...cms, footer: { ...cms.footer, socialLinks: list } });
   };
 
   // ----------------------------------------------------
@@ -1145,6 +1159,56 @@ export default function CmsEditor({ notify }) {
             </div>
           </div>
 
+          {/* Social Media Channels */}
+          <div className="dash-card">
+            <div className="dash-card-head">
+              <div>
+                <span className="eyebrow">Connect &amp; Community</span>
+                <h3>Official Social Media Accounts</h3>
+                <p className="muted small" style={{ margin: 0 }}>
+                  Links to your official Instagram, LinkedIn, TikTok, and Facebook channels. Changes update both footer links and icons live.
+                </p>
+              </div>
+            </div>
+
+            <div className="form-row-2" style={{ marginTop: 14 }}>
+              {(Array.isArray(cms.footer?.socialLinks) && cms.footer.socialLinks.length > 0
+                ? cms.footer.socialLinks
+                : [
+                    { platform: 'Instagram', url: 'https://instagram.com/perfume_zone21', handle: '@perfume_zone21' },
+                    { platform: 'LinkedIn', url: 'https://www.linkedin.com/in/perfume-zone-b0b687443', handle: 'perfume-zone' },
+                    { platform: 'TikTok', url: 'https://www.tiktok.com/@user8350399294532', handle: '@user8350399294532' },
+                    { platform: 'Facebook', url: 'https://www.facebook.com/perfumezonesouthampton', handle: 'perfumezonesouthampton' }
+                  ]
+              ).map((soc, sIdx) => (
+                <div key={soc.platform || sIdx} className="cms-badge-edit-box">
+                  <div className="cms-badge-top">
+                    {soc.platform === 'Instagram' ? <InstagramIcon /> : soc.platform === 'LinkedIn' ? <LinkedInIcon /> : soc.platform === 'TikTok' ? <TikTokIcon /> : <FacebookIcon />}
+                    <strong>{soc.platform}</strong>
+                  </div>
+                  <div className="form-group" style={{ marginTop: 8 }}>
+                    <label>Profile URL</label>
+                    <input
+                      type="url"
+                      value={soc.url || ''}
+                      onChange={(e) => updateSocialLink(sIdx, 'url', e.target.value)}
+                      placeholder={`https://${(soc.platform || '').toLowerCase()}.com/...`}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Handle / Username (Optional)</label>
+                    <input
+                      type="text"
+                      value={soc.handle || ''}
+                      onChange={(e) => updateSocialLink(sIdx, 'handle', e.target.value)}
+                      placeholder="@username"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Footer Quick Links Columns */}
           <div className="dash-card">
             <div className="dash-card-head">
@@ -1274,7 +1338,7 @@ export default function CmsEditor({ notify }) {
                   type="text"
                   value={cms.contact?.showroomName || ''}
                   onChange={(e) => updateContactField('showroomName', e.target.value)}
-                  placeholder="London Boutique & Showroom"
+                  placeholder="Perfume Zone Southampton Store"
                 />
               </div>
             </div>
@@ -1296,7 +1360,7 @@ export default function CmsEditor({ notify }) {
                   rows={4}
                   value={cms.contact?.address || ''}
                   onChange={(e) => updateContactField('address', e.target.value)}
-                  placeholder="Perfume Zone UK&#10;48 Mayfair Luxury Lane&#10;London, W1K 2PB&#10;United Kingdom"
+                  placeholder="Perfume Zone&#10;Unit 38 Marlands Shopping Centre&#10;Civic Centre Road&#10;Southampton&#10;SO14 7SJ&#10;United Kingdom"
                 />
               </div>
               <div className="form-group">
@@ -1305,7 +1369,7 @@ export default function CmsEditor({ notify }) {
                   rows={4}
                   value={cms.contact?.hours || ''}
                   onChange={(e) => updateContactField('hours', e.target.value)}
-                  placeholder="Monday – Saturday: 10:00 AM – 7:00 PM&#10;Sunday: 12:00 PM – 6:00 PM"
+                  placeholder="Monday – Saturday: 09:30 AM – 5:30 PM&#10;Sunday: 11:00 AM – 5:00 PM"
                 />
               </div>
             </div>

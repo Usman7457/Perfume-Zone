@@ -3,7 +3,23 @@ import { useState, useEffect } from 'react';
 import { FOOTER } from '../data/nav.js';
 import { subscribe, getSiteContent } from '../api.js';
 import CountrySelect from './CountrySelect.jsx';
-import { ShieldIcon, TruckIcon, LockIcon } from './Icons.jsx';
+import { ShieldIcon, TruckIcon, LockIcon, InstagramIcon, LinkedInIcon, FacebookIcon, TikTokIcon } from './Icons.jsx';
+
+const DEFAULT_SOCIAL_LINKS = [
+  { platform: 'Instagram', url: 'https://instagram.com/perfume_zone21' },
+  { platform: 'LinkedIn', url: 'https://www.linkedin.com/in/perfume-zone-b0b687443' },
+  { platform: 'TikTok', url: 'https://www.tiktok.com/@user8350399294532' },
+  { platform: 'Facebook', url: 'https://www.facebook.com/perfumezonesouthampton' }
+];
+
+function getSocialIcon(platform = '') {
+  const p = platform.toLowerCase();
+  if (p.includes('instagram')) return <InstagramIcon />;
+  if (p.includes('linkedin')) return <LinkedInIcon />;
+  if (p.includes('tiktok')) return <TikTokIcon />;
+  if (p.includes('facebook')) return <FacebookIcon />;
+  return null;
+}
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -31,12 +47,9 @@ export default function Footer() {
 
   const companyLinks = footerData.companyLinks || FOOTER.company.map(([label, to]) => ({ label, to }));
   const legalLinks = footerData.legalLinks || FOOTER.legal.map(([label, to]) => ({ label, to }));
-  const socialLinks = footerData.socialLinks || [
-    { platform: 'Instagram', url: '#' },
-    { platform: 'TikTok', url: '#' },
-    { platform: 'Facebook', url: '#' },
-    { platform: 'YouTube', url: '#' }
-  ];
+  const socialLinks = Array.isArray(footerData.socialLinks) && footerData.socialLinks.length > 0
+    ? footerData.socialLinks
+    : DEFAULT_SOCIAL_LINKS;
 
   return (
     <footer className="footer">
@@ -104,9 +117,11 @@ export default function Footer() {
                   target={s.url && s.url !== '#' ? '_blank' : undefined}
                   rel={s.url && s.url !== '#' ? 'noopener noreferrer' : undefined}
                   aria-label={s.platform}
+                  className="social-pill-link"
                   onClick={(e) => { if (!s.url || s.url === '#') e.preventDefault(); }}
                 >
-                  {s.platform}
+                  {getSocialIcon(s.platform)}
+                  <span>{s.platform}</span>
                 </a>
               </li>
             ))}
