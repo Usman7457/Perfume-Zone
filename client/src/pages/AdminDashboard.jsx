@@ -29,6 +29,8 @@ import {
 import { ShieldIcon, TruckIcon, UserIcon, CheckIcon, BagIcon, HeartIcon, TagIcon } from '../components/Icons.jsx';
 import CmsEditor from '../components/CmsEditor.jsx';
 import ImageUploadField from '../components/ImageUploadField.jsx';
+import AdminCharts from '../components/AdminCharts.jsx';
+import { exportOrdersPdf, exportProductsPdf, exportSubscribersPdf } from '../utils/pdfReports.js';
 
 const EMPTY_PRODUCT_FORM = {
   handle: '',
@@ -813,6 +815,9 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
+                {/* VISUAL CHARTS & ANALYTICS (Column, Area, and Line Charts) */}
+                <AdminCharts orders={orders} products={products} subscribers={subscribers} />
+
                 <div className="dash-card">
                   <div className="dash-card-head">
                     <div>
@@ -918,6 +923,17 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <div className="dash-card-actions">
+                    <button
+                      type="button"
+                      className="btn-pdf-export"
+                      onClick={() => {
+                        exportProductsPdf(filteredProducts.length ? filteredProducts : products);
+                        notify('Downloaded Products Catalog Report (PDF)');
+                      }}
+                      title="Download products catalog inventory as PDF"
+                    >
+                      ⬇ Download Report (PDF)
+                    </button>
                     <button type="button" className="btn" onClick={openNewProduct}>+ Add Product</button>
                     <Link to="/import" className="btn ghost">Import Excel</Link>
                     <button
@@ -1188,6 +1204,19 @@ export default function AdminDashboard() {
                     <p className="muted small" style={{ margin: 0 }}>
                       Update order status, Royal Mail / DPD tracking codes, and customer dispatch notes.
                     </p>
+                  </div>
+                  <div className="dash-card-actions">
+                    <button
+                      type="button"
+                      className="btn-pdf-export"
+                      onClick={() => {
+                        exportOrdersPdf(filteredOrders.length ? filteredOrders : orders);
+                        notify('Downloaded Orders & Fulfillment Report (PDF)');
+                      }}
+                      title="Download orders report as PDF"
+                    >
+                      ⬇ Download Report (PDF)
+                    </button>
                   </div>
                 </div>
 
@@ -1819,6 +1848,21 @@ export default function AdminDashboard() {
                         Visitors subscribed via footer or popup campaigns.
                       </p>
                     </div>
+                    {subscribers.length > 0 && (
+                      <div className="dash-card-actions">
+                        <button
+                          type="button"
+                          className="btn-pdf-export"
+                          onClick={() => {
+                            exportSubscribersPdf(subscribers);
+                            notify('Downloaded Subscribers Audience Report (PDF)');
+                          }}
+                          title="Download marketing subscribers list as PDF"
+                        >
+                          ⬇ Download Report (PDF)
+                        </button>
+                      </div>
+                    )}
                   </div>
                   {subscribers.length === 0 ? (
                     <p className="muted" style={{ margin: 0 }}>No newsletter subscribers recorded yet.</p>

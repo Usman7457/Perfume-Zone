@@ -81,7 +81,7 @@ export default function ImportProducts() {
           const image_url_2 = findVal('image_url_2', 'image2', 'secondaryimage', 'alternateimage');
           const description = findVal('description', 'desc', 'details', 'notes', 'body') || 'Luxurious fragrance crafted for lasting elegance.';
           const size = findVal('size', 'volume', 'bottle', 'variant') || '100ml Eau De Parfum';
-          const collections = findVal('collections', 'category', 'categories', 'collection', 'tags') || 'new-in|all';
+          const collections = findVal('collections', 'category', 'categories', 'collection', 'tags') || 'new-releases|all';
 
           return {
             id: Date.now() + idx,
@@ -90,8 +90,8 @@ export default function ImportProducts() {
             brand,
             price,
             compare_at_price,
-            image_url: image_url || 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
-            image_url_2: image_url_2 || null,
+            image_url: image_url || '',
+            image_url_2: image_url_2 || '',
             description,
             size,
             collections,
@@ -140,22 +140,48 @@ export default function ImportProducts() {
         Price: 48.00,
         Compare_At_Price: 60.00,
         Size: '100ml Eau De Parfum',
-        Collections: 'new-in|best-sellers|lattafa|gourmand|unisex',
-        Image_URL: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&w=800&q=80',
-        Image_URL_2: 'https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=800&q=80',
+        Collections: 'new-releases|best-sellers|unisex-perfume|lattafa',
         Description: 'An intoxicating blend of cardamom, roasted Arabica coffee, ginger, sweet candied pralines, and benzoin.'
       },
       {
-        Handle: 'oud-maracuja-maison-crivelli',
-        Title: 'Oud Maracuja Extrait',
-        Brand: 'Blends of Dubai',
-        Price: 79.00,
-        Compare_At_Price: 95.00,
+        Handle: 'afnan-supremacy-not-only-intense',
+        Title: 'Afnan Supremacy Not Only Intense',
+        Brand: 'Afnan',
+        Price: 55.00,
+        Compare_At_Price: 70.00,
         Size: '100ml Extrait De Parfum',
-        Collections: 'new-in|oud-1|extrait-de-parfum|fruity-1',
-        Image_URL: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
-        Image_URL_2: '',
-        Description: 'Vibrant passion fruit accords fused with deep, resinous smoky oud and Indonesian patchouli.'
+        Collections: 'for-him|best-sellers|afnan|all',
+        Description: 'Fresh bergamot, crisp apple and blackcurrant transitioning into rich oakmoss, musk and patchouli.'
+      },
+      {
+        Handle: 'rasasi-hawas-for-her',
+        Title: 'Rasasi Hawas For Her',
+        Brand: 'Rasasi',
+        Price: 52.00,
+        Compare_At_Price: 65.00,
+        Size: '100ml Eau De Parfum',
+        Collections: 'for-her|new-releases|rasasi|all',
+        Description: 'Enchanting pomegranate, jasmine sambac, and iris with warm praline and patchouli base.'
+      },
+      {
+        Handle: 'swiss-arabian-shaghaf-oud-attar',
+        Title: 'Swiss Arabian Shaghaf Oud Concentrated Oil',
+        Brand: 'Swiss Arabian',
+        Price: 34.00,
+        Compare_At_Price: 42.00,
+        Size: '12ml Concentrated Oil (Attar)',
+        Collections: 'perfume-oils|unisex-perfume|swiss-arabian',
+        Description: 'Pure agarwood oud and precious saffron enveloped in delicate rose and praline sweetness.'
+      },
+      {
+        Handle: 'armaf-club-de-nuit-discovery-set',
+        Title: 'Armaf Club De Nuit Discovery Gift Set',
+        Brand: 'Armaf',
+        Price: 65.00,
+        Compare_At_Price: 85.00,
+        Size: '3 x 30ml Luxury Set',
+        Collections: 'fragrance-sets|for-him|armaf|best-sellers',
+        Description: 'Iconic trio featuring Intense Man, Sillage, and Milestone in luxury travel presentation.'
       }
     ];
 
@@ -282,7 +308,13 @@ export default function ImportProducts() {
                   <tr key={idx}>
                     <td>
                       <div className="table-thumb">
-                        {r.image_url ? <img src={r.image_url} alt="" /> : <div className="ph" />}
+                        {r.image_url ? (
+                          <img src={r.image_url} alt="" />
+                        ) : (
+                          <div className="ph" title="Upload photo in admin panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#d4af37', textAlign: 'center', padding: 2 }}>
+                            📷 Panel
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td><strong>{r.title}</strong></td>
@@ -331,20 +363,20 @@ export default function ImportProducts() {
             <span>Original/RRP price for sale discount calculation</span>
           </div>
           <div className="col-guide-card">
-            <strong>Image_URL</strong>
-            <span>Direct image link or web URL for the bottle</span>
-          </div>
-          <div className="col-guide-card">
             <strong>Size</strong>
-            <span>Bottle size / concentration (e.g., 100ml EDP)</span>
+            <span>Bottle size / concentration (e.g., 100ml EDP, 12ml Attar Oil)</span>
           </div>
           <div className="col-guide-card">
             <strong>Collections</strong>
-            <span>Pipe-separated collection handles (e.g. new-in|best-sellers|mens)</span>
+            <span>Pipe-separated categories (e.g. new-releases|best-sellers|for-him|for-her|unisex-perfume|perfume-oils|fragrance-sets)</span>
           </div>
           <div className="col-guide-card">
             <strong>Description</strong>
             <span>Fragrance story, notes, and sillage description</span>
+          </div>
+          <div className="col-guide-card" style={{ borderColor: 'var(--gold)', background: 'rgba(212, 175, 55, 0.05)' }}>
+            <strong>📷 Product Images (Panel File Upload)</strong>
+            <span>Image URL 1 &amp; 2 columns have been removed. You can upload high-resolution product images directly from the Admin Dashboard using the file chooser button.</span>
           </div>
         </div>
       </section>

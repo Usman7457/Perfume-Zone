@@ -9,8 +9,12 @@
     "server": "npm --prefix .. run server"
   },
   "dependencies": {
+    "chart.js": "^4.6.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9",
     "perfumezone": "file:..",
     "react": "^18.3.1",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.0",
     "xlsx": "^0.18.5"

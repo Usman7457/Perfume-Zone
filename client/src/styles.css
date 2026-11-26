@@ -4017,6 +4017,7 @@ ul {
 }
 
 @media (min-width: 900px) {
+
   .stores,
   .stores-single-layout {
     grid-template-columns: 1.4fr 1fr;
@@ -4334,7 +4335,7 @@ ul {
 .footer {
   background: #0e0e0e;
   color: #e5e5e5;
-  margin-top: 72px;
+  margin-top: 0;
 }
 
 .footer a {
@@ -4978,7 +4979,7 @@ ul {
 
   /* Footer Mobile */
   .footer {
-    margin-top: 48px;
+    margin-top: 0;
   }
 
   .newsletter {
@@ -8035,4 +8036,181 @@ ul {
 .form-panel-footer button[type="submit"],
 .form-panel-footer .btn {
   margin-top: 0;
+}
+
+/* ===================================================
+   ADMIN DASHBOARD CHARTS & ANALYTICS (DARK LUXURY)
+   =================================================== */
+.admin-charts-container {
+  background: #141414 !important;
+  border: 1px solid #282828 !important;
+  color: #ededed;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.admin-charts-container .dash-card-head h2,
+.admin-charts-container h4 {
+  color: #f5f5f5;
+}
+
+.admin-chart-pill-group {
+  display: inline-flex;
+  background: #202020;
+  padding: 3px;
+  border-radius: 6px;
+  border: 1px solid #333333;
+}
+
+.chart-pill-btn {
+  background: transparent;
+  border: none;
+  color: #999999;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.chart-pill-btn:hover {
+  color: #ffffff;
+}
+
+.chart-pill-btn.active {
+  background: #2e2e2e;
+  color: var(--gold);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.admin-charts-kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  padding: 14px 16px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #262626;
+}
+
+.chart-kpi-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chart-kpi-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #888888;
+}
+
+.chart-kpi-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.admin-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.chart-box-card {
+  background: #1a1a1a;
+  border: 1px solid #282828;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.chart-box-card.span-2,
+.chart-box-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.chart-box-header {
+  margin-bottom: 12px;
+}
+
+.chart-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  margin-bottom: 4px;
+}
+
+.area-badge {
+  background: rgba(212, 175, 55, 0.15);
+  color: #d4af37;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.column-badge {
+  background: rgba(230, 200, 110, 0.15);
+  color: #e6c86e;
+  border: 1px solid rgba(230, 200, 110, 0.3);
+}
+
+.line-badge {
+  background: rgba(79, 163, 227, 0.15);
+  color: #4fa3e3;
+  border: 1px solid rgba(79, 163, 227, 0.3);
+}
+
+.chart-canvas-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+@media (max-width: 860px) {
+  .admin-charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .chart-box-card.span-2 {
+    grid-column: 1;
+  }
+}
+
+/* ===================================================
+   PDF EXPORT BUTTON STYLES
+   =================================================== */
+.btn-pdf-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #1f1f1f;
+  color: var(--gold);
+  border: 1px solid #383838;
+  padding: 7px 14px;
+  border-radius: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-pdf-export:hover {
+  background: var(--gold);
+  color: #0e0e0e;
+  border-color: var(--gold);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-pdf-export svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
 }
