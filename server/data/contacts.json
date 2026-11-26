@@ -1,0 +1,38 @@
+[
+  {
+    "id": "CNT-1795611407125",
+    "name": "Usman",
+    "email": "usmanghani00@gmail.com",
+    "phone": "+923420057457",
+    "subject": "Customer Service",
+    "message": "Test",
+    "createdAt": "2026-11-25T12:56:47.125Z"
+  },
+  {
+    "id": "CNT-1795611389647",
+    "name": "Usman",
+    "email": "usmanghani00@gmail.com",
+    "phone": "+923420057457",
+    "subject": "Order Tracking",
+    "message": "Test",
+    "createdAt": "2026-11-25T12:56:29.647Z"
+  },
+  {
+    "id": "CNT-1795611291807",
+    "name": "Usman",
+    "email": "usmanghani00@gmail.com",
+    "phone": "+923420057457",
+    "subject": "Order Tracking",
+    "message": "Test",
+    "createdAt": "2026-11-25T12:54:51.807Z"
+  },
+  {
+    "id": "CNT-1795611169224",
+    "name": "Usman",
+    "email": "usmanghani00@gmail.com",
+    "phone": "+923420057457",
+    "subject": "Order Tracking",
+    "message": "Test",
+    "createdAt": "2026-11-25T12:52:49.224Z"
+  }
+]
